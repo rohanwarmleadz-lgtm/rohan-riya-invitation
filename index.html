@@ -400,18 +400,19 @@ footer .f-sub{font-family:'Jost',sans-serif;font-size:.66rem;letter-spacing:.24e
 }
 body.opened .pill{display:flex}
 #langPill{left:15px;bottom:calc(17px + env(safe-area-inset-bottom,0px))}
-#soundPill{right:15px;top:calc(17px + env(safe-area-inset-top,0px));padding:10px 11px;line-height:0}
-.spk{width:19px;height:19px;display:block;overflow:visible}
-.spk .spk-body{fill:var(--wine);stroke:var(--wine);stroke-width:1.5;stroke-linejoin:round}
-.spk path:not(.spk-body){fill:none;stroke:var(--wine);stroke-width:1.7;stroke-linecap:round}
-/* muted (default): waves hidden, slash shown */
-.spk .spk-w1,.spk .spk-w2{opacity:0;transition:opacity .25s ease,transform .25s ease;transform-origin:8px 12px}
-.spk .spk-slash{opacity:.85;transition:opacity .25s ease}
-/* playing */
-#soundPill.on .spk .spk-w1{opacity:.95;animation:spkW 1.9s ease-in-out infinite}
-#soundPill.on .spk .spk-w2{opacity:.75;animation:spkW 1.9s ease-in-out .28s infinite}
-#soundPill.on .spk .spk-slash{opacity:0}
-@keyframes spkW{0%,100%{opacity:.35}50%{opacity:1}}
+#soundPill{right:15px;top:calc(17px + env(safe-area-inset-top,0px));padding:10px 12px;line-height:0}
+.note{width:18px;height:18px;display:block;overflow:visible}
+.note .note-beam,.note .note-head{fill:var(--gold-deep);stroke:none}
+.note .note-stem{fill:none;stroke:var(--gold-deep);stroke-width:1.5;stroke-linecap:round}
+.note .note-g{transform-origin:12px 12px;transition:opacity .3s ease}
+/* muted (default): note dimmed, fine slash across it */
+.note .note-g{opacity:.42}
+.note .note-slash{fill:none;stroke:var(--gold-deep);stroke-width:1.5;stroke-linecap:round;opacity:.9;
+  stroke-dasharray:22;stroke-dashoffset:0;transition:stroke-dashoffset .35s ease,opacity .3s ease}
+/* playing: slash draws away, note brightens and sways gently */
+#soundPill.on .note .note-g{opacity:1;animation:noteSway 2.6s ease-in-out infinite}
+#soundPill.on .note .note-slash{stroke-dashoffset:22;opacity:0}
+@keyframes noteSway{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(3deg) translateY(-1px)}}
 
 /* ================= finger-reactive magic ================= */
 #fxLayer{position:fixed;inset:0;z-index:55;pointer-events:none;overflow:hidden}
@@ -669,7 +670,7 @@ body.opened #ambientFx{opacity:1}
     <h2 class="sec-title reveal" data-i18n="venueTitle">The Venue</h2>
     <div class="orn reveal"><span class="ln"></span><span class="dot"><svg viewBox="0 0 24 24"><path d="M12 2 L15 9 L22 12 L15 15 L12 22 L9 15 L2 12 L9 9 Z" fill="var(--gold)"/></svg></span><span class="ln r"></span></div>
     <div class="v-name reveal">Hotel Trinity</div>
-    <p class="addr reveal" data-i18n="venueAddr">Banquet Hall<br>Raigarh, Chhattisgarh 496001</p>
+    <p class="addr reveal" data-i18n="venueAddr">Crown Hall<br>Raigarh, Chhattisgarh 496001</p>
     <div class="mapbox reveal"><span data-i18n="mapArea">📍 &nbsp;Map Preview</span></div>
     <a class="btn reveal" href="https://www.google.com/maps/search/?api=1&query=Hotel+Trinity+Raigarh+Chhattisgarh" target="_blank" rel="noopener" data-i18n="mapBtn">View on Google Maps</a>
   </section>
@@ -745,11 +746,14 @@ body.opened #ambientFx{opacity:1}
 
 <button class="pill" id="langPill">🌐 <span id="langLabel">हिन्दी</span></button>
 <button class="pill" id="soundPill" aria-label="Play music" aria-pressed="false">
-  <svg class="spk" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path class="spk-body" d="M4 9.5h3.2L12 5.6v12.8l-4.8-3.9H4z"/>
-    <path class="spk-w1" d="M15.4 9.6a3.6 3.6 0 0 1 0 4.8"/>
-    <path class="spk-w2" d="M18 7.3a7 7 0 0 1 0 9.4"/>
-    <path class="spk-slash" d="M16.2 9.2l5 5.6M21.2 9.2l-5 5.6"/>
+  <svg class="note" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <g class="note-g">
+      <path class="note-beam" d="M9.6 7.4c3.4-1 6-1.7 8.1-2.2v2.9c-2.1.5-4.7 1.2-8.1 2.2z"/>
+      <path class="note-stem" d="M9.6 7.4v8.9M17.7 5.2v8.5"/>
+      <ellipse class="note-head" cx="7.3" cy="16.6" rx="2.5" ry="1.9" transform="rotate(-20 7.3 16.6)"/>
+      <ellipse class="note-head" cx="15.4" cy="14.4" rx="2.5" ry="1.9" transform="rotate(-20 15.4 14.4)"/>
+    </g>
+    <path class="note-slash" d="M4.4 19.8L19.9 4.4"/>
   </svg>
 </button>
 
@@ -772,7 +776,7 @@ const I18N = {
     evEngagement:"Engagement Ceremony", evEngagementNote:"Your gracious presence is requested ❤",
     evDj:"DJ Night", evDjNote:"Let's dance the night away ✨",
     ebVenue:"Where love gathers",
-    venueTitle:"The Venue", venueAddr:"Banquet Hall<br>Raigarh, Chhattisgarh 496001", mapArea:"📍 &nbsp;Map Preview", mapBtn:"View on Google Maps",
+    venueTitle:"The Venue", venueAddr:"Crown Hall<br>Raigarh, Chhattisgarh 496001", mapArea:"📍 &nbsp;Map Preview", mapBtn:"View on Google Maps",
     ebShower:"A shower of blessings", showerTitle:"Shower Them With Flowers",
     showerIntro:"Tap and hold to rain petals over the couple — an old blessing, in your hands.",
     showerHint:"Tap to shower",
@@ -801,7 +805,7 @@ const I18N = {
     evEngagement:"सगाई समारोह", evEngagementNote:"आपकी गरिमामयी उपस्थिति प्रार्थनीय है ❤",
     evDj:"डीजे नाइट", evDjNote:"आइए, रातभर थिरकें ✨",
     ebVenue:"जहाँ प्रेम मिलता है",
-    venueTitle:"स्थान", venueAddr:"बैंक्वेट हॉल<br>रायगढ़, छत्तीसगढ़ 496001", mapArea:"📍 &nbsp;नक्शा", mapBtn:"गूगल मैप्स पर देखें",
+    venueTitle:"स्थान", venueAddr:"क्राउन हॉल<br>रायगढ़, छत्तीसगढ़ 496001", mapArea:"📍 &nbsp;नक्शा", mapBtn:"गूगल मैप्स पर देखें",
     ebShower:"आशीर्वाद की वर्षा", showerTitle:"पुष्प वर्षा कीजिए",
     showerIntro:"दबाकर रखिए और जोड़े पर फूल बरसाइए — एक पुरानी परंपरा, आपके हाथों।",
     showerHint:"फूल बरसाने के लिए स्पर्श करें",
