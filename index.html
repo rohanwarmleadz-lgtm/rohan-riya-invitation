@@ -211,7 +211,7 @@ html.litefx #hero.play .hero-img{animation:heroRevealLite 3.2s cubic-bezier(.22,
   55%{opacity:1;filter:brightness(1.05)}
   100%{transform:scale(1);opacity:1;filter:brightness(1)}
 }
-@keyframes heroKen{0%{transform:scale(1) translate3d(0,0,0)}100%{transform:scale(1.025) translate3d(-.8%,-.6%,0)}}
+@keyframes heroKen{0%{transform:scale(1.006) translate3d(.5%,.4%,0)}100%{transform:scale(1.062) translate3d(-1.7%,-1.2%,0)}}
 /* moonlight breathing — a soft halo that swells around the moon */
 .hero-moonhalo{position:absolute;left:50%;top:16%;width:min(46vw,300px);aspect-ratio:1;z-index:2;
   transform:translate(-50%,-50%);pointer-events:none;mix-blend-mode:screen;border-radius:50%;
@@ -232,34 +232,61 @@ html.litefx #hero.play .hero-img{animation:heroRevealLite 3.2s cubic-bezier(.22,
 .hero-vignette{position:absolute;inset:0;pointer-events:none;z-index:2;
   background:radial-gradient(ellipse 80% 64% at 50% 40%,transparent 55%,rgba(26,15,36,.44) 100%)}
 .hero-shimmer{position:absolute;inset:0;pointer-events:none;z-index:2;mix-blend-mode:screen;
-  background:radial-gradient(ellipse 64% 44% at 50% 36%,rgba(255,226,182,.09),transparent 60%);
+  background:radial-gradient(ellipse 64% 44% at 50% 36%,rgba(255,226,182,.125),transparent 60%);
   animation:heroShimmer 7.5s ease-in-out infinite}
-@keyframes heroShimmer{0%,100%{opacity:.18}50%{opacity:.4}}
+@keyframes heroShimmer{0%,100%{opacity:.26}50%{opacity:.58}}
 /* particles */
 .hero-fx{position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden}
 .hero-fly{position:absolute;border-radius:50%;
   background:radial-gradient(circle,rgba(255,243,208,.96),rgba(255,214,150,.5) 48%,transparent 72%);
   animation:heroFly linear infinite}
-@keyframes heroFly{0%{transform:translate(0,30px) scale(.5);opacity:0}
-  12%{opacity:.9}55%{opacity:.72}88%{opacity:.4}100%{transform:translate(var(--dx,12px),-130px) scale(1.05);opacity:0}}
+@keyframes heroFly{
+  0%{transform:translate3d(0,30px,0) scale(.5);opacity:0}
+  12%{opacity:.9}
+  30%{transform:translate3d(calc(var(--dx,12px)*.65),-34px,0) scale(.92)}
+  52%{opacity:.75;transform:translate3d(calc(var(--dx,12px)*-.45),-68px,0) scale(1)}
+  74%{transform:translate3d(calc(var(--dx,12px)*.9),-102px,0) scale(1.02)}
+  88%{opacity:.4}
+  100%{transform:translate3d(var(--dx,12px),-138px,0) scale(1.06);opacity:0}}
+/* out-of-focus light orbs drifting through the foreground — the single biggest
+   cinematic tell, and localised so it never hazes the whole frame */
+.hero-bokeh{position:absolute;border-radius:50%;pointer-events:none;mix-blend-mode:screen;
+  background:radial-gradient(circle,rgba(255,233,190,.46),rgba(255,205,138,.15) 54%,transparent 72%);
+  filter:blur(2.5px);opacity:0;will-change:transform;animation:bokehDrift linear infinite}
+@keyframes bokehDrift{
+  0%{transform:translate3d(0,26px,0) scale(.82);opacity:0}
+  16%{opacity:.5}
+  55%{opacity:.4;transform:translate3d(calc(var(--bx,30px)*.55),-58px,0) scale(1.02)}
+  84%{opacity:.22}
+  100%{transform:translate3d(var(--bx,30px),-132px,0) scale(1.18);opacity:0}}
+/* the wet floor in the artwork was doing nothing — give it a slow caustic shimmer */
+.hero-water{position:absolute;left:-8%;right:-8%;bottom:0;height:27%;z-index:2;pointer-events:none;
+  mix-blend-mode:screen;filter:blur(1.5px);will-change:transform;
+  background:
+    linear-gradient(180deg,transparent,rgba(255,224,172,.05) 46%,transparent),
+    repeating-linear-gradient(95deg,transparent 0 24px,rgba(255,231,186,.05) 24px 28px,transparent 28px 58px);
+  animation:waterDrift 15s ease-in-out infinite alternate}
+@keyframes waterDrift{
+  0%{transform:translate3d(-2.2%,0,0) scaleY(1);opacity:.55}
+  100%{transform:translate3d(2.2%,0,0) scaleY(1.07);opacity:.95}}
 .hero-spark{position:absolute;border-radius:50%;background:rgba(255,249,234,.96);
   box-shadow:0 0 6px 2px rgba(255,226,170,.75);opacity:0;animation:heroTwk ease-in-out infinite}
 @keyframes heroTwk{0%,100%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1)}}
 /* luminous glow that lights the couple's names from within */
 .hero-namglow{position:absolute;left:50%;top:53%;width:82%;height:38%;transform:translate(-50%,-50%);
   z-index:1;pointer-events:none;mix-blend-mode:screen;
-  background:radial-gradient(ellipse at center,rgba(255,234,196,.13),rgba(255,214,150,.05) 44%,transparent 66%);
+  background:radial-gradient(ellipse at center,rgba(255,234,196,.175),rgba(255,214,150,.07) 44%,transparent 66%);
   animation:nameGlow 5.5s ease-in-out infinite}
-@keyframes nameGlow{0%,100%{opacity:.35;transform:translate(-50%,-50%) scale(.97)}50%{opacity:.75;transform:translate(-50%,-50%) scale(1.05)}}
+@keyframes nameGlow{0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(.96)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.07)}}
 /* soft drifting god-rays from the top of the arch */
 .hero-rays2{position:absolute;left:50%;top:-8%;width:150%;height:96%;transform:translateX(-50%);
   z-index:2;pointer-events:none;mix-blend-mode:screen;
   background:
-   linear-gradient(96deg,transparent 45%,rgba(255,238,205,.09) 48.5%,transparent 51%),
-   linear-gradient(88deg,transparent 47%,rgba(255,238,205,.07) 50%,transparent 53%),
-   linear-gradient(102deg,transparent 43%,rgba(255,238,205,.06) 46%,transparent 49%);
+   linear-gradient(96deg,transparent 45%,rgba(255,238,205,.125) 48.5%,transparent 51%),
+   linear-gradient(88deg,transparent 47%,rgba(255,238,205,.10) 50%,transparent 53%),
+   linear-gradient(102deg,transparent 43%,rgba(255,238,205,.085) 46%,transparent 49%);
   animation:rays2 13s ease-in-out infinite alternate}
-@keyframes rays2{0%{opacity:.18;transform:translateX(-52%) rotate(-1.2deg)}100%{opacity:.4;transform:translateX(-48%) rotate(1.2deg)}}
+@keyframes rays2{0%{opacity:.26;transform:translateX(-52.5%) rotate(-1.6deg)}100%{opacity:.6;transform:translateX(-47.5%) rotate(1.6deg)}}
 /* slow-falling rose petals */
 .hero-petal{position:absolute;pointer-events:none;
   background:linear-gradient(135deg,rgba(255,208,212,.9),rgba(228,158,168,.6));
@@ -641,6 +668,7 @@ html.litefx #ambientFx{display:none}
     <div class="hero-namglow"></div>
     <div class="hero-rays2"></div>
     <div class="hero-shimmer"></div>
+    <div class="hero-water"></div>
     <div class="hero-glint"></div>
     <div class="hero-fx" id="heroFx"></div>
     <div class="hero-vignette"></div>
@@ -890,9 +918,36 @@ if('scrollRestoration' in history) history.scrollRestoration='manual';
 window.scrollTo(0,0);
 const env=document.getElementById('envelopeScreen');
 const hero=document.getElementById('hero');
-const liteFx=(window.matchMedia&&window.matchMedia('(hover:none) and (pointer:coarse)').matches)||
-  (window.matchMedia&&window.matchMedia('(max-width: 820px)').matches);
+/* Lite mode used to trigger on "(hover:none) and (pointer:coarse)" OR width<=820px —
+   i.e. every phone and tablet ever made. Essentially every guest therefore saw a
+   stripped hero (35 particles instead of 91, reduced reveal, no ambient FX), which is
+   not a call a 2026 phone needs made for it. Gate on what the device can actually do,
+   and keep a live frame-rate net for the ones that genuinely struggle. */
+const _mem=navigator.deviceMemory||0;              /* GB; not exposed on iOS */
+const _cores=navigator.hardwareConcurrency||0;
+const liteFx=(_mem>0&&_mem<=2)||(_cores>0&&_cores<=2)||
+  (window.matchMedia&&window.matchMedia('(max-width: 360px)').matches);
 if(liteFx) document.documentElement.classList.add('litefx');
+
+/* If the hero genuinely cannot hold a frame rate here, thin it out at runtime
+   rather than pre-judging by screen size. */
+function heroPerfGuard(){
+  if(liteFx) return;
+  var f=[], t0=performance.now();
+  (function rec(ts){ f.push(ts); if(performance.now()-t0<1400) requestAnimationFrame(rec); else check(); })(t0);
+  function check(){
+    if(f.length<20) return;
+    var g=[]; for(var i=1;i<f.length;i++) g.push(f[i]-f[i-1]);
+    g.sort(function(a,b){return a-b;});
+    if(g[Math.floor(g.length/2)]<=22) return;        /* holding ~45fps+, leave it alone */
+    document.documentElement.classList.add('litefx');
+    var fx=document.getElementById('heroFx'); if(!fx) return;
+    ['hero-fly','hero-spark','hero-petal','hero-bokeh','hero-gdust'].forEach(function(c){
+      var els=fx.querySelectorAll('.'+c);
+      for(var i=Math.ceil(els.length*0.45);i<els.length;i++) els[i].remove();
+    });
+  }
+}
 
 /* --- split the envelope image into crease-hinged flap + static top band + body ---
    Real-envelope physics: ONLY the V-triangle rotates, hinged exactly on its crease
@@ -952,6 +1007,7 @@ function startOpen(){
   setTimeout(()=>env.classList.add('lit'), 1450);                     // sparkles rise as the flap swings
   setTimeout(()=>{ env.classList.add('diving'); env.classList.add('bloom'); hero.classList.add('play'); swellMusic(); }, 3100); // after a breath, one calm dive through
   setTimeout(()=>{
+    heroPerfGuard();
     document.body.classList.remove('locked');
     document.body.classList.add('opened');
     startMusicIfOn();
@@ -978,26 +1034,37 @@ env.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.prevent
 /* hero living atmosphere: drifting fireflies + twinkling fairy-lights */
 (function(){ const fx=document.getElementById('heroFx'); if(!fx) return;
   const lite=document.documentElement.classList.contains('litefx');
-  for(let i=0;i<(lite?8:18);i++){ const f=document.createElement('i'); f.className='hero-fly';
+  for(let i=0;i<(lite?9:24);i++){ const f=document.createElement('i'); f.className='hero-fly';
     const sz=(2+Math.random()*4).toFixed(1); f.style.width=sz+'px'; f.style.height=sz+'px';
     f.style.left=(Math.random()*100)+'%'; f.style.top=(58+Math.random()*44)+'%';
     f.style.setProperty('--dx',((Math.random()*2-1)*44).toFixed(0)+'px');
     f.style.animationDuration=(7+Math.random()*8)+'s'; f.style.animationDelay=(Math.random()*9)+'s';
     fx.appendChild(f); }
   const zones=[[10,32,20,44],[60,82,10,46],[22,78,2,14]]; // this artwork: left hanging bulbs, right bulb strand, top arch lights
-  for(let i=0;i<(lite?12:28);i++){ const s=document.createElement('i'); s.className='hero-spark';
+  for(let i=0;i<(lite?13:34);i++){ const s=document.createElement('i'); s.className='hero-spark';
     const z=zones[Math.floor(Math.random()*zones.length)];
     const sz=(1.4+Math.random()*2.6).toFixed(1); s.style.width=sz+'px'; s.style.height=sz+'px';
     s.style.left=(z[0]+Math.random()*(z[1]-z[0])).toFixed(1)+'%';
     s.style.top=(z[2]+Math.random()*(z[3]-z[2])).toFixed(1)+'%';
     s.style.animationDuration=(1.6+Math.random()*2.6)+'s'; s.style.animationDelay=(Math.random()*3.2)+'s';
     fx.appendChild(s); }
-  for(let i=0;i<(lite?3:7);i++){ const p=document.createElement('i'); p.className='hero-petal';
+  for(let i=0;i<(lite?4:11);i++){ const p=document.createElement('i'); p.className='hero-petal';
     const w=(6+Math.random()*7).toFixed(1); p.style.width=w+'px'; p.style.height=(w*0.72).toFixed(1)+'px';
     p.style.left=(Math.random()*100)+'%';
     p.style.setProperty('--px',((Math.random()*2-1)*60).toFixed(0)+'px');
     p.style.animationDuration=(11+Math.random()*9)+'s'; p.style.animationDelay=(Math.random()*14)+'s';
     fx.appendChild(p); }
+  /* out-of-focus bokeh — larger + blurrier = further away, drifting slower */
+  for(let i=0;i<(lite?4:10);i++){ const b=document.createElement('i'); b.className='hero-bokeh';
+    const depth=Math.random();                       /* 0 near, 1 far */
+    const sz=(9+depth*30).toFixed(0);
+    b.style.width=sz+'px'; b.style.height=sz+'px';
+    b.style.left=(Math.random()*100)+'%'; b.style.top=(46+Math.random()*54)+'%';
+    b.style.filter='blur('+(1.4+depth*4.2).toFixed(1)+'px)';
+    b.style.setProperty('--bx',((Math.random()*2-1)*52).toFixed(0)+'px');
+    b.style.animationDuration=(13+depth*11+Math.random()*5).toFixed(1)+'s';
+    b.style.animationDelay=(Math.random()*16).toFixed(1)+'s';
+    fx.appendChild(b); }
   /* candlelight glows anchored on the artwork's lanterns */
   const candles=[[13,85,110],[20,92,72],[7,79,60],[79,84,104],[71,89,64],[88,93,76],[94,97,60]];
   candles.forEach(c=>{ const e=document.createElement('i'); e.className='hero-candle';
