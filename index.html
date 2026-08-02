@@ -1080,9 +1080,9 @@ tick();setInterval(tick,1000);
 document.getElementById('msgForm').addEventListener('submit',e=>{e.preventDefault();
   document.getElementById('msgForm').style.display='none';document.getElementById('msgThanks').style.display='block';});
 
-/* music — only plays the attached O Sanam track. No alternate song or ambient fallback. */
+/* music — only plays the latest extracted invitation track. No alternate song or ambient fallback. */
 const Music=(function(){
-  const TRACK='o-sanam-only-20260802.m4a?v=only-osanam-20260802', VOL_TRACK=0.55;
+  const TRACK='invitation-song-20260802-192808.m4a?v=only-this-song-20260802-192808', VOL_TRACK=0.55;
   let audio=null, fadeTimer=null;
   let playing=false, userMuted=false;          /* single source of truth */
 
