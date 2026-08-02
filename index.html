@@ -1226,6 +1226,18 @@ function setSoundPill(on){const pill=document.getElementById('soundPill'); if(!p
     g.strokeStyle='rgba(160,90,90,.16)'; g.lineWidth=.7;
     g.beginPath(); g.moveTo(0,-r*.7); g.lineTo(0,r*.75); g.stroke(); }; }
 
+  /* radial glows are rebuilt from scratch every frame in the naive version — one
+     createRadialGradient per spark per frame. Bake them once and blit instead. */
+  function radialSprite(size,stops){
+    const c=document.createElement('canvas'); c.width=c.height=size;
+    const g=c.getContext('2d'), r=size/2, gr=g.createRadialGradient(r,r,0,r,r,r);
+    stops.forEach(st=>gr.addColorStop(st[0],st[1]));
+    g.fillStyle=gr; g.fillRect(0,0,size,size); return c;
+  }
+  const DUST=radialSprite(48,[[0,'rgba(255,240,200,.95)'],[1,'rgba(255,214,150,0)']]);
+  const RIPPLE=radialSprite(128,[[0,'rgba(255,236,196,0)'],[.35,'rgba(255,236,196,0)'],
+                                 [.805,'rgba(255,228,180,.30)'],[1,'rgba(255,214,150,0)']]);
+
   function buildSprites(){
     const specs=[];
     ROSE.forEach(c=>specs.push(rose(c)));
@@ -1242,6 +1254,8 @@ function setSoundPill(on){const pill=document.getElementById('soundPill'); if(!p
   const GOAL=108;
   let W=0,H=0,dpr=1,parts=[],rest=[],sparks=[],ripples=[],heart=[];
   let raf=0,total=0,holdTimer=0,tone=null,finale=false,wind=0,gust=0,t=0;
+  let last=0;                      /* timestamp of previous frame, for delta-time motion */
+  let CAP=MAX, probe=0, slowFrames=0;   /* adaptive: thin the shower on phones that can't keep up */
 
   function size(){ const r=cv.getBoundingClientRect(); dpr=Math.min(devicePixelRatio||1,2);
     W=r.width; H=r.height; cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
@@ -1282,7 +1296,7 @@ function setSoundPill(on){const pill=document.getElementById('soundPill'); if(!p
   }
 
   function spawn(n){
-    for(let i=0;i<n && parts.length<MAX;i++){
+    for(let i=0;i<n && parts.length<CAP;i++){
       const depth=Math.random();                       /* 0 = far, 1 = near */
       const whole=Math.random()<.42;                   /* whole bloom vs loose petal */
       const idx = whole ? (Math.random()*PETAL_START|0)
@@ -1314,67 +1328,81 @@ function setSoundPill(on){const pill=document.getElementById('soundPill'); if(!p
     ctx.drawImage(img,-SP/2,-SP/2);
     ctx.restore();
   }
-  function tick(){
-    t++; ctx.clearRect(0,0,W,H);
+  function tick(ts){
+    /* Motion is measured in TIME, not frames. Previously every step was "+= per frame",
+       so a phone rendering at 40fps literally made the petals fall slower and unevenly —
+       that is the stutter. dt normalises each step to a 60fps frame, clamped so a
+       background tab or a long stall cannot teleport everything. */
+    if(ts==null) ts=performance.now();
+    const dt = last ? Math.max(.25, Math.min(3,(ts-last)/16.667)) : 1;
+    last = ts;
+
+    /* first ~50 frames tell us what this device can actually sustain */
+    if(probe<50){ probe++; if(dt>1.6) slowFrames++;
+      if(probe===50 && slowFrames>18){ CAP=Math.round(MAX*.55); if(parts.length>CAP) parts.length=CAP; } }
+
+    t+=dt; ctx.clearRect(0,0,W,H);
     /* breeze: slow base sway + occasional gust */
     wind = Math.sin(t*0.006)*0.22;
-    if(gust>0){ wind += gust; gust*=0.972; }
-    else if(Math.random()<0.0035) gust=(Math.random()-.5)*1.5;
+    if(gust>0){ wind += gust; gust*=Math.pow(0.972,dt); }
+    else if(Math.random()<0.0035*dt) gust=(Math.random()-.5)*1.5;
 
     /* settled drift at the base */
-    for(let i=rest.length-1;i>=0;i--){ const r=rest[i]; r.life++;
+    for(let i=rest.length-1;i>=0;i--){ const r=rest[i]; r.life+=dt;
       const fade=r.life>150?Math.max(0,1-(r.life-150)/90):1;
       if(fade<=0){ rest.splice(i,1); continue; }
       ctx.save(); ctx.translate(r.x,r.y); ctx.rotate(r.rot); ctx.scale(r.s*.9,r.s*.34);
       ctx.globalAlpha=.55*fade; ctx.drawImage(r.far?r.sp.far:r.sp.near,-SP/2,-SP/2); ctx.restore(); }
 
-    /* gold dust */
-    for(let i=sparks.length-1;i>=0;i--){ const k=sparks[i]; k.life++; k.ph+=.05;
-      k.y+=k.vy; k.x+=Math.sin(k.ph)*.5+wind*.6; k.a=Math.min(1,k.life/16);
+    /* gold dust — blit the baked glow, no gradient allocation */
+    for(let i=sparks.length-1;i>=0;i--){ const k=sparks[i]; k.life+=dt; k.ph+=.05*dt;
+      k.y+=k.vy*dt; k.x+=(Math.sin(k.ph)*.5+wind*.6)*dt; k.a=Math.min(1,k.life/16);
       if(k.y>H+8){ sparks.splice(i,1); continue; }
-      ctx.save(); ctx.globalAlpha=k.a*(.5+Math.sin(k.ph*2)*.35);
-      const g=ctx.createRadialGradient(k.x,k.y,0,k.x,k.y,k.r*3.2);
-      g.addColorStop(0,'rgba(255,240,200,.95)'); g.addColorStop(1,'rgba(255,214,150,0)');
-      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(k.x,k.y,k.r*3.2,0,7); ctx.fill(); ctx.restore(); }
+      const sz=k.r*6.4;
+      ctx.globalAlpha=k.a*(.5+Math.sin(k.ph*2)*.35);
+      ctx.drawImage(DUST,k.x-sz/2,k.y-sz/2,sz,sz); }
+    ctx.globalAlpha=1;
 
-    /* falling flowers — far layer first for depth */
-    parts.sort((a,b)=>a.z-b.z);
+    /* falling flowers — update once, then draw far layer before near.
+       (The old code re-sorted all 260 particles by depth EVERY frame, even though
+        depth never changes after spawn. Two passes give the same layering for free.) */
     for(let i=parts.length-1;i>=0;i--){
-      const p=parts[i]; p.life++;
-      p.vy=Math.min(p.vy+0.011, 1.5+p.z*1.1);
-      p.ph+=0.032;
-      p.x += p.vx + Math.sin(p.ph)*p.sway*0.42 + wind*(0.5+p.z);
-      p.y += p.vy;
-      p.rot += p.vr + wind*0.006; p.flip += p.vf;
+      const p=parts[i]; p.life+=dt;
+      p.vy=Math.min(p.vy+0.011*dt, 1.5+p.z*1.1);
+      p.ph+=0.032*dt;
+      p.x += (p.vx + Math.sin(p.ph)*p.sway*0.42 + wind*(0.5+p.z))*dt;
+      p.y += p.vy*dt;
+      p.rot += (p.vr + wind*0.006)*dt; p.flip += p.vf*dt;
       if(p.y > H+26){
         if(rest.length<46 && Math.random()<.5)
           rest.push({sp:p.sp,far:p.far,x:p.x,y:H-4-Math.random()*7,rot:Math.random()*6.28,s:p.s,life:0});
-        parts.splice(i,1); continue;
+        parts.splice(i,1);
       }
-      draw(p);
     }
+    for(let i=0;i<parts.length;i++) if(parts[i].far)  draw(parts[i]);
+    for(let i=0;i<parts.length;i++) if(!parts[i].far) draw(parts[i]);
 
     /* finale garland — flowers gather into a heart around the couple's names */
-    for(let i=heart.length-1;i>=0;i--){ const h=heart[i]; h.life++;
+    for(let i=heart.length-1;i>=0;i--){ const h=heart[i]; h.life+=dt;
       if(h.life<0) continue;
       const u=Math.min(1,h.life/62), ease=1-Math.pow(1-u,3),
             fade=h.life>420?Math.max(0,1-(h.life-420)/90):1;
       if(fade<=0){ heart.splice(i,1); continue; }
       const x=h.sx+(h.tx-h.sx)*ease+Math.sin(t*.05+i)*1.8,
             y=h.sy+(h.ty-h.sy)*ease+Math.cos(t*.045+i)*1.4;
-      h.rot+=h.vr;
+      h.rot+=h.vr*dt;
       ctx.save(); ctx.translate(x,y); ctx.rotate(h.rot); ctx.scale(h.s,h.s);
       ctx.globalAlpha=Math.min(1,u*2)*fade; ctx.drawImage(h.sp.near,-SP/2,-SP/2); ctx.restore(); }
 
     /* tap ripples */
-    for(let i=ripples.length-1;i>=0;i--){ const r=ripples[i]; r.r+=3.4; r.a-=.022;
+    for(let i=ripples.length-1;i>=0;i--){ const r=ripples[i]; r.r+=3.4*dt; r.a-=.022*dt;
       if(r.a<=0){ ripples.splice(i,1); continue; }
-      ctx.save(); ctx.globalAlpha=r.a;
-      const g=ctx.createRadialGradient(r.x,r.y,r.r*.35,r.x,r.y,r.r);
-      g.addColorStop(0,'rgba(255,236,196,0)'); g.addColorStop(.7,'rgba(255,228,180,.30)'); g.addColorStop(1,'rgba(255,214,150,0)');
-      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(r.x,r.y,r.r,0,7); ctx.fill(); ctx.restore(); }
+      ctx.globalAlpha=r.a; ctx.drawImage(RIPPLE,r.x-r.r,r.y-r.r,r.r*2,r.r*2); }
+    ctx.globalAlpha=1;
 
-    raf = (parts.length||sparks.length||rest.length||ripples.length||heart.length) ? requestAnimationFrame(tick) : 0;
+    if(parts.length||sparks.length||rest.length||ripples.length||heart.length){
+      raf=requestAnimationFrame(tick);
+    } else { raf=0; last=0; }   /* reset so the next burst does not see a huge dt */
   }
 
   function chime(){ try{ tone=tone||new (window.AudioContext||window.webkitAudioContext)(); const c=tone; c.resume();
@@ -1394,7 +1422,9 @@ function setSoundPill(on){const pill=document.getElementById('soundPill'); if(!p
     if(!raf) raf=requestAnimationFrame(tick);
   }
   function startHold(e){ stage.classList.add('holding'); burst(e);
-    clearInterval(holdTimer); holdTimer=setInterval(()=>{ spawn(reduce?3:8); goldDust(reduce?1:3); }, 165); }
+    /* same rate as before (~48 petals/sec) but delivered in small even taps rather
+       than a clump of 8 every 165ms — that clumping read as "atak-atak" */
+    clearInterval(holdTimer); holdTimer=setInterval(()=>{ spawn(reduce?1:3); goldDust(reduce?1:1); }, 62); }
   function endHold(){ stage.classList.remove('holding'); clearInterval(holdTimer); holdTimer=0; }
 
   /* Gesture intent. A finger landing here may be a blessing OR the start of a scroll,
