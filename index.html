@@ -501,7 +501,7 @@ body.opened #scrollProgress{opacity:1}
 .tl-item.in .tl-ic{opacity:1;transform:scale(1)}
 .tl-ic svg{width:13px;height:13px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
-/* ================= closing — share + hashtag + families ================= */
+/* ================= closing — share + families ================= */
 .share-row{display:flex;gap:12px;justify-content:center;margin-top:30px;flex-wrap:wrap}
 .share-btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none;
   font-family:'Jost',sans-serif;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--wine);
@@ -509,8 +509,7 @@ body.opened #scrollProgress{opacity:1}
   transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
 .share-btn:active{transform:translateY(1px)}
 .share-btn svg{width:16px;height:16px}
-.hashtag{font-family:'Jost',sans-serif;font-size:.82rem;letter-spacing:.14em;color:var(--wine);margin-top:26px}
-.families{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.08rem;color:var(--ink-soft);margin-top:8px}
+.families{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.08rem;color:var(--ink-soft);margin-top:26px}
 
 /* ================= persistent ambient particles ================= */
 #ambientFx{position:fixed;inset:0;z-index:6;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 1.4s ease}
@@ -724,8 +723,7 @@ body.opened #ambientFx{opacity:1}
         <span data-i18n="shareCopy">Copy link</span>
       </button>
     </div>
-    <div class="hashtag">#RohanAndRiya</div>
-    <div class="families" data-i18n="families">With love, the Garg &amp; Sharma families</div>
+    <div class="families" data-i18n="families">With love, Garg &amp; Bansal families</div>
   </section>
 
   <footer>
@@ -765,7 +763,7 @@ const I18N = {
     msgTitle:"Your Message", msgPh:"Write your wishes...", msgBtn:"Send Message",
     msgThanks:"💌 Thank you! Your wishes mean the world to us.",
     closingLine:"We can't wait to<br>celebrate with you",
-    shareWa:"WhatsApp", shareCopy:"Copy link", copied:"Copied ✓", families:"With love, the Garg &amp; Sharma families",
+    shareWa:"WhatsApp", shareCopy:"Copy link", copied:"Copied ✓", families:"With love, Garg &amp; Bansal families",
     footerSub:"13 · 08 · 2026 &nbsp;•&nbsp; Made with love",
     langLabel:"हिन्दी"
   },
@@ -794,7 +792,7 @@ const I18N = {
     msgTitle:"आपका संदेश", msgPh:"अपनी शुभकामनाएँ लिखें...", msgBtn:"संदेश भेजें",
     msgThanks:"💌 धन्यवाद! आपकी शुभकामनाएँ हमारे लिए अनमोल हैं।",
     closingLine:"आपके साथ जश्न मनाने का<br>हमें बेसब्री से इंतज़ार है",
-    shareWa:"व्हाट्सऐप", shareCopy:"लिंक कॉपी करें", copied:"कॉपी हो गया ✓", families:"सप्रेम, गर्ग एवं शर्मा परिवार",
+    shareWa:"व्हाट्सऐप", shareCopy:"लिंक कॉपी करें", copied:"कॉपी हो गया ✓", families:"सप्रेम, गर्ग एवं बंसल परिवार",
     footerSub:"13 · 08 · 2026 &nbsp;•&nbsp; प्रेम सहित",
     langLabel:"English"
   }
@@ -995,8 +993,10 @@ document.getElementById('msgForm').addEventListener('submit',e=>{e.preventDefaul
 const Music=(function(){
   const TRACK='music.mp3', TRACK_VOL=0.6;
   let audio=null, useTrack=true, trackFailed=false, fadeTimer=null;
-  (function initTrack(){ const a=new Audio(TRACK); a.preload='auto'; a.loop=true; a.volume=0; audio=a;
+  (function initTrack(){ const a=new Audio(TRACK); a.preload='auto'; a.loop=true; a.volume=0; a.muted=false; audio=a;
     a.addEventListener('error',()=>{ trackFailed=true; useTrack=false; },{once:true});
+    a.addEventListener('play',()=>setSoundPill(true));
+    a.addEventListener('pause',()=>{ if(!muted) setSoundPill(false); });
     a.load(); })();
   function fadeTo(target,ms){ if(!audio) return; clearInterval(fadeTimer);
     const step=(target-audio.volume)/(ms/60);
@@ -1025,29 +1025,51 @@ const Music=(function(){
   }
   function setChord(k){const t=ctx.currentTime;CHORDS[k].forEach((f,i)=>voices[i].frequency.setTargetAtTime(f,t,.6));}
   function ramp(to,sec){const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(Math.max(.0001,master.gain.value),t);master.gain.linearRampToValueAtTime(to,t+sec);}
+  function startPad(sec){ if(!ctx)build();ctx.resume();started=true;if(!muted)ramp(TARGET,sec); }
+  function startTrack(ms){
+    if(!audio) return false;
+    setSoundPill(true);
+    audio.play().then(()=>{ started=true; fadeTo(TRACK_VOL,ms); setSoundPill(true); })
+      .catch(()=>{ started=false; if(trackFailed){ useTrack=false; startPad(2.6); setSoundPill(true); } else setSoundPill(false); });
+    return true;
+  }
+  function audible(){ return useTrack&&audio ? !audio.paused : !!(ctx&&master&&master.gain.value>.001); }
   return {
     start(){
-      if(started)return;started=true;
-      if(useTrack&&audio){ if(!muted){ audio.play().then(()=>fadeTo(TRACK_VOL,2400)).catch(()=>{ if(trackFailed){ if(!ctx)build();ctx.resume();ramp(TARGET,2.6); } }); } return; }
-      if(!ctx)build();ctx.resume();if(!muted)ramp(TARGET,2.6);},
+      if(muted) return false;
+      if(useTrack&&audio){ startTrack(2400); return true; }
+      startPad(2.6); setSoundPill(true); return true;},
     swell(){
       if(muted)return;
-      if(useTrack&&audio){ fadeTo(Math.min(1,TRACK_VOL*1.3),1200); setTimeout(()=>{ if(!muted) fadeTo(TRACK_VOL,2600); },3200); return; }
+      if(useTrack&&audio){ if(audio.paused){ startTrack(1200); return; }
+        fadeTo(Math.min(1,TRACK_VOL*1.3),1200); setTimeout(()=>{ if(!muted) fadeTo(TRACK_VOL,2600); },3200); return; }
       if(!ctx)return;const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(Math.max(.0001,master.gain.value),t);
       master.gain.linearRampToValueAtTime(TARGET*1.55,t+1.5);master.gain.linearRampToValueAtTime(TARGET,t+5);},
     toggle(){
-      muted=!muted;
-      if(useTrack&&audio){ if(muted){ fadeTo(0,500); } else { if(!started){ this.start(); } else { audio.play().catch(()=>{}); fadeTo(TRACK_VOL,700); } } return !muted; }
-      if(!ctx&&!muted){this.start();return!muted;}if(ctx)ramp(muted?0:TARGET,.6);return!muted;}
+      if(!muted && audible()){ muted=true; if(useTrack&&audio) fadeTo(0,500); else if(ctx)ramp(0,.6); setSoundPill(false); return false; }
+      muted=false;
+      if(useTrack&&audio){ startTrack(700); return true; }
+      startPad(.7); setSoundPill(true); return true;},
+    isOn(){ return !muted&&audible(); }
   };
 })();
 function startMusicIfOn(){Music.start();}
 function swellMusic(){Music.swell();}
 /* autoplay policy: begin on the first user gesture */
-(function(){function go(){Music.start();['pointerdown','touchstart','keydown','scroll'].forEach(ev=>window.removeEventListener(ev,go));}
+(function(){function go(e){ if(e.target&&e.target.closest&&e.target.closest('#soundPill')) return;
+  Music.start();['pointerdown','touchstart','keydown','scroll'].forEach(ev=>window.removeEventListener(ev,go));}
   ['pointerdown','touchstart','keydown','scroll'].forEach(ev=>window.addEventListener(ev,go,{passive:true}));})();
-(function(){const pill=document.getElementById('soundPill');pill.textContent='🔊';
-  pill.addEventListener('click',function(e){e.stopPropagation();this.textContent=Music.toggle()?'🔊':'🔇';});})();
+function setSoundPill(on){const pill=document.getElementById('soundPill'); if(!pill) return;
+  pill.textContent=on?'🔊':'🔇';
+  pill.setAttribute('aria-label',on?'Mute music':'Play music');
+  pill.setAttribute('aria-pressed',on?'true':'false');}
+(function(){const pill=document.getElementById('soundPill');setSoundPill(false);
+  let handledAt=0;
+  function press(e){e.preventDefault();e.stopPropagation();const now=Date.now();if(now-handledAt<450)return;
+    handledAt=now;setSoundPill(Music.toggle());}
+  ['pointerdown','touchstart'].forEach(ev=>pill.addEventListener(ev,press,{passive:false}));
+  pill.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();
+    if(Date.now()-handledAt>500) setSoundPill(Music.toggle());});})();
 
 /* ================= finger-reactive magic ================= */
 (function(){
