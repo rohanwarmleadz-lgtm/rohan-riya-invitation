@@ -76,6 +76,7 @@ body::after{
   opacity:.35;mix-blend-mode:soft-light;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
+html.litefx body::after{display:none}
 
 /* ============ shared type & ornaments ============ */
 .foil{
@@ -197,11 +198,17 @@ body::after{
    .heroon is set the moment the envelope image has landed (or on tap, whichever is first). */
 html.heroon .hero-img{background-image:url("hero.jpg?v=3")}
 #hero.play .hero-img{animation:heroReveal 4s cubic-bezier(.22,.62,.28,1),heroKen 26s ease-in-out 4s infinite alternate}
+html.litefx #hero.play .hero-img{animation:heroRevealLite 3.2s cubic-bezier(.22,.62,.28,1),heroKen 30s ease-in-out 3.2s infinite alternate}
 /* cover emerges out of focus and resolves — one continuous camera move, no cut */
 @keyframes heroReveal{
   0%{transform:scale(1.18);filter:blur(11px) brightness(1.35)}
   50%{filter:blur(2px) brightness(1.08)}
   100%{transform:scale(1);filter:blur(0) brightness(1)}
+}
+@keyframes heroRevealLite{
+  0%{transform:scale(1.12);opacity:.22;filter:brightness(1.18)}
+  55%{opacity:1;filter:brightness(1.05)}
+  100%{transform:scale(1);opacity:1;filter:brightness(1)}
 }
 @keyframes heroKen{0%{transform:scale(1) translate3d(0,0,0)}100%{transform:scale(1.025) translate3d(-.8%,-.6%,0)}}
 /* moonlight breathing — a soft halo that swells around the moon */
@@ -419,6 +426,8 @@ footer .f-sub{font-family:'Jost',sans-serif;font-size:.66rem;letter-spacing:.24e
   border-radius:999px;padding:10px 17px;box-shadow:0 8px 20px rgba(90,40,45,.24),inset 0 0 0 1px rgba(193,154,78,.4);
   display:none;align-items:center;gap:7px;backdrop-filter:blur(5px);
 }
+html.litefx .scroll-invite,
+html.litefx .pill{-webkit-backdrop-filter:none;backdrop-filter:none}
 body.opened .pill{display:flex}
 #langPill{left:15px;bottom:calc(17px + env(safe-area-inset-bottom,0px))}
 #soundPill{right:15px;top:calc(17px + env(safe-area-inset-top,0px));padding:10px 12px;line-height:0}
@@ -559,6 +568,7 @@ body.opened #scrollProgress{opacity:1}
 /* ================= persistent ambient particles ================= */
 #ambientFx{position:fixed;top:0;left:0;width:100%;height:100%;z-index:6;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 1.4s ease}
 body.opened #ambientFx{opacity:1}
+html.litefx #ambientFx{display:none}
 .amb-petal{position:absolute;background:linear-gradient(135deg,rgba(255,208,214,.7),rgba(226,158,168,.4));
   border-radius:60% 40% 62% 38%/48% 62% 38% 52%;opacity:0;animation:ambFall linear infinite}
 @keyframes ambFall{0%{transform:translate(0,-30px) rotate(0);opacity:0}10%{opacity:.55}90%{opacity:.4}100%{transform:translate(var(--ax,30px),104vh) rotate(300deg);opacity:0}}
@@ -879,6 +889,9 @@ if('scrollRestoration' in history) history.scrollRestoration='manual';
 window.scrollTo(0,0);
 const env=document.getElementById('envelopeScreen');
 const hero=document.getElementById('hero');
+const liteFx=(window.matchMedia&&window.matchMedia('(hover:none) and (pointer:coarse)').matches)||
+  (window.matchMedia&&window.matchMedia('(max-width: 820px)').matches);
+if(liteFx) document.documentElement.classList.add('litefx');
 
 /* --- split the envelope image into crease-hinged flap + static top band + body ---
    Real-envelope physics: ONLY the V-triangle rotates, hinged exactly on its crease
@@ -950,31 +963,35 @@ env.addEventListener('click', startOpen);                            // opens ON
 env.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); startOpen(); } });
 
 /* closed-state light particles */
-(function(){ for(let i=0;i<16;i++){const p=document.createElement('i');p.className='gdust';
+(function(){ const n=document.documentElement.classList.contains('litefx')?10:16;
+  for(let i=0;i<n;i++){const p=document.createElement('i');p.className='gdust';
   p.style.left=(4+Math.random()*92)+'%';p.style.top=(20+Math.random()*72)+'%';
   p.style.animationDuration=(4+Math.random()*5)+'s';p.style.animationDelay=(Math.random()*5)+'s';env.appendChild(p);} })();
 /* energetic sparkles rushing up through the opened envelope */
-(function(){ const sp=document.getElementById('envSparks');for(let i=0;i<44;i++){const s=document.createElement('i');
+(function(){ const sp=document.getElementById('envSparks');
+  const n=document.documentElement.classList.contains('litefx')?24:44;
+  for(let i=0;i<n;i++){const s=document.createElement('i');
   const big=Math.random()<.3; const px=big?4:3; s.style.width=px+'px'; s.style.height=px+'px';
   s.style.left=(20+Math.random()*60)+'%';s.style.top=(30+Math.random()*36)+'%';
   s.style.setProperty('--d',(1.2+Math.random()*1.3)+'s');s.style.setProperty('--dl',(Math.random()*1.6)+'s');sp.appendChild(s);} })();
 /* hero living atmosphere: drifting fireflies + twinkling fairy-lights */
 (function(){ const fx=document.getElementById('heroFx'); if(!fx) return;
-  for(let i=0;i<18;i++){ const f=document.createElement('i'); f.className='hero-fly';
+  const lite=document.documentElement.classList.contains('litefx');
+  for(let i=0;i<(lite?8:18);i++){ const f=document.createElement('i'); f.className='hero-fly';
     const sz=(2+Math.random()*4).toFixed(1); f.style.width=sz+'px'; f.style.height=sz+'px';
     f.style.left=(Math.random()*100)+'%'; f.style.top=(58+Math.random()*44)+'%';
     f.style.setProperty('--dx',((Math.random()*2-1)*44).toFixed(0)+'px');
     f.style.animationDuration=(7+Math.random()*8)+'s'; f.style.animationDelay=(Math.random()*9)+'s';
     fx.appendChild(f); }
   const zones=[[10,32,20,44],[60,82,10,46],[22,78,2,14]]; // this artwork: left hanging bulbs, right bulb strand, top arch lights
-  for(let i=0;i<28;i++){ const s=document.createElement('i'); s.className='hero-spark';
+  for(let i=0;i<(lite?12:28);i++){ const s=document.createElement('i'); s.className='hero-spark';
     const z=zones[Math.floor(Math.random()*zones.length)];
     const sz=(1.4+Math.random()*2.6).toFixed(1); s.style.width=sz+'px'; s.style.height=sz+'px';
     s.style.left=(z[0]+Math.random()*(z[1]-z[0])).toFixed(1)+'%';
     s.style.top=(z[2]+Math.random()*(z[3]-z[2])).toFixed(1)+'%';
     s.style.animationDuration=(1.6+Math.random()*2.6)+'s'; s.style.animationDelay=(Math.random()*3.2)+'s';
     fx.appendChild(s); }
-  for(let i=0;i<7;i++){ const p=document.createElement('i'); p.className='hero-petal';
+  for(let i=0;i<(lite?3:7);i++){ const p=document.createElement('i'); p.className='hero-petal';
     const w=(6+Math.random()*7).toFixed(1); p.style.width=w+'px'; p.style.height=(w*0.72).toFixed(1)+'px';
     p.style.left=(Math.random()*100)+'%';
     p.style.setProperty('--px',((Math.random()*2-1)*60).toFixed(0)+'px');
@@ -988,7 +1005,7 @@ env.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.prevent
     e.style.setProperty('--cf',(2.6+Math.random()*1.8)+'s'); e.style.setProperty('--cfd',(Math.random()*2.2)+'s');
     fx.appendChild(e); });
   /* gold dust settling in after arrival (echoes the sparkles dived through) */
-  for(let i=0;i<12;i++){ const d=document.createElement('i'); d.className='hero-gdust';
+  for(let i=0;i<(lite?5:12);i++){ const d=document.createElement('i'); d.className='hero-gdust';
     const sz=(2+Math.random()*3).toFixed(1); d.style.width=sz+'px'; d.style.height=sz+'px';
     d.style.left=(Math.random()*100)+'%';
     d.style.setProperty('--gx',((Math.random()*2-1)*30).toFixed(0)+'px');
@@ -1002,7 +1019,8 @@ env.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.prevent
 })();
 
 /* pointer / device-tilt parallax for subtle depth on the cover */
-(function(){ const px=document.getElementById('heroParallax'); if(!px) return; let tx=0,ty=0,cur=0,cuy=0,raf=0;
+(function(){ if(document.documentElement.classList.contains('litefx')) return;
+  const px=document.getElementById('heroParallax'); if(!px) return; let tx=0,ty=0,cur=0,cuy=0,raf=0;
   function loop(){ cuy+=(ty-cuy)*.08; cur+=(tx-cur)*.08; px.style.transform='translate3d('+cur.toFixed(2)+'px,'+cuy.toFixed(2)+'px,0)';
     if(Math.abs(tx-cur)>.1||Math.abs(ty-cuy)>.1){raf=requestAnimationFrame(loop);}else{raf=0;} }
   function set(nx,ny){ tx=nx; ty=ny; if(!raf) raf=requestAnimationFrame(loop); }
@@ -1153,7 +1171,7 @@ function setSoundPill(on){const pill=document.getElementById('soundPill'); if(!p
 /* ================= finger-reactive magic ================= */
 (function(){
   const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(reduce) return;
+  if(reduce||document.documentElement.classList.contains('litefx')) return;
   const layer=document.createElement('div'); layer.id='fxLayer'; document.body.appendChild(layer);
   let lx=null,ly=null;
   function spark(x,y){ const s=document.createElement('i'); s.className='fx-spark';
@@ -1494,6 +1512,7 @@ function setSoundPill(on){const pill=document.getElementById('soundPill'); if(!p
 
 /* ================= persistent ambient particles (whole card feels alive) ================= */
 (function(){ if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if(document.documentElement.classList.contains('litefx')) return;
   const fx=document.createElement('div'); fx.id='ambientFx'; document.body.appendChild(fx);
   for(let i=0;i<5;i++){ const p=document.createElement('i'); p.className='amb-petal';
     const w=(7+Math.random()*7).toFixed(1); p.style.width=w+'px'; p.style.height=(w*.72).toFixed(1)+'px';
