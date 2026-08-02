@@ -194,6 +194,8 @@ html.litefx body::after{display:none}
 .hero-parallax{position:absolute;inset:0;will-change:transform;transition:transform .4s cubic-bezier(.2,.7,.3,1)}
 /* living cover: slow cinematic camera drift over the artwork (Ken Burns) */
 .hero-img{position:absolute;inset:-2.5%;background:#0f1a2c center center / cover no-repeat;
+  filter:contrast(1.045) saturate(1.035);  /* restores bite lost to the screen-blend layers */
+  image-rendering:auto;
   will-change:transform;animation:heroKen 26s ease-in-out infinite alternate;backface-visibility:hidden}
 /* hero is behind the closed envelope, so it must not race it for bandwidth.
    .heroon is set the moment the envelope image has landed (or on tap, whichever is first). */
@@ -202,16 +204,16 @@ html.heroon .hero-img{background-image:url("hero.jpg?v=3")}
 html.litefx #hero.play .hero-img{animation:heroRevealLite 3.2s cubic-bezier(.22,.62,.28,1),heroKen 30s ease-in-out 3.2s infinite alternate}
 /* cover emerges out of focus and resolves — one continuous camera move, no cut */
 @keyframes heroReveal{
-  0%{transform:scale(1.18);filter:blur(11px) brightness(1.35)}
-  50%{filter:blur(2px) brightness(1.08)}
-  100%{transform:scale(1);filter:blur(0) brightness(1)}
+  0%{transform:scale(1.18);filter:blur(11px) brightness(1.35) contrast(1.045) saturate(1.035)}
+  50%{filter:blur(2px) brightness(1.08) contrast(1.045) saturate(1.035)}
+  100%{transform:scale(1);filter:blur(0) brightness(1) contrast(1.045) saturate(1.035)}
 }
 @keyframes heroRevealLite{
-  0%{transform:scale(1.12);opacity:.22;filter:brightness(1.18)}
-  55%{opacity:1;filter:brightness(1.05)}
-  100%{transform:scale(1);opacity:1;filter:brightness(1)}
+  0%{transform:scale(1.12);opacity:.22;filter:brightness(1.18) contrast(1.045) saturate(1.035)}
+  55%{opacity:1;filter:brightness(1.05) contrast(1.045) saturate(1.035)}
+  100%{transform:scale(1);opacity:1;filter:brightness(1) contrast(1.045) saturate(1.035)}
 }
-@keyframes heroKen{0%{transform:scale(1.006) translate3d(.5%,.4%,0)}100%{transform:scale(1.062) translate3d(-1.7%,-1.2%,0)}}
+@keyframes heroKen{0%{transform:scale(1) translate3d(.5%,.4%,0)}100%{transform:scale(1.046) translate3d(-1.6%,-1.1%,0)}}
 /* moonlight breathing — a soft halo that swells around the moon */
 .hero-moonhalo{position:absolute;left:50%;top:16%;width:min(46vw,300px);aspect-ratio:1;z-index:2;
   transform:translate(-50%,-50%);pointer-events:none;mix-blend-mode:screen;border-radius:50%;
@@ -232,9 +234,9 @@ html.litefx #hero.play .hero-img{animation:heroRevealLite 3.2s cubic-bezier(.22,
 .hero-vignette{position:absolute;inset:0;pointer-events:none;z-index:2;
   background:radial-gradient(ellipse 80% 64% at 50% 40%,transparent 55%,rgba(26,15,36,.44) 100%)}
 .hero-shimmer{position:absolute;inset:0;pointer-events:none;z-index:2;mix-blend-mode:screen;
-  background:radial-gradient(ellipse 64% 44% at 50% 36%,rgba(255,226,182,.125),transparent 60%);
+  background:radial-gradient(ellipse 64% 44% at 50% 36%,rgba(255,226,182,.075),transparent 60%);
   animation:heroShimmer 7.5s ease-in-out infinite}
-@keyframes heroShimmer{0%,100%{opacity:.26}50%{opacity:.58}}
+@keyframes heroShimmer{0%,100%{opacity:.16}50%{opacity:.34}}
 /* particles */
 .hero-fx{position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden}
 .hero-fly{position:absolute;border-radius:50%;
@@ -275,18 +277,18 @@ html.litefx #hero.play .hero-img{animation:heroRevealLite 3.2s cubic-bezier(.22,
 /* luminous glow that lights the couple's names from within */
 .hero-namglow{position:absolute;left:50%;top:53%;width:82%;height:38%;transform:translate(-50%,-50%);
   z-index:1;pointer-events:none;mix-blend-mode:screen;
-  background:radial-gradient(ellipse at center,rgba(255,234,196,.175),rgba(255,214,150,.07) 44%,transparent 66%);
+  background:radial-gradient(ellipse at center,rgba(255,234,196,.085),rgba(255,214,150,.032) 44%,transparent 62%);
   animation:nameGlow 5.5s ease-in-out infinite}
-@keyframes nameGlow{0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(.96)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.07)}}
+@keyframes nameGlow{0%,100%{opacity:.26;transform:translate(-50%,-50%) scale(.96)}50%{opacity:.5;transform:translate(-50%,-50%) scale(1.06)}}
 /* soft drifting god-rays from the top of the arch */
 .hero-rays2{position:absolute;left:50%;top:-8%;width:150%;height:96%;transform:translateX(-50%);
   z-index:2;pointer-events:none;mix-blend-mode:screen;
   background:
-   linear-gradient(96deg,transparent 45%,rgba(255,238,205,.125) 48.5%,transparent 51%),
-   linear-gradient(88deg,transparent 47%,rgba(255,238,205,.10) 50%,transparent 53%),
-   linear-gradient(102deg,transparent 43%,rgba(255,238,205,.085) 46%,transparent 49%);
+   linear-gradient(96deg,transparent 46%,rgba(255,238,205,.062) 48.5%,transparent 51%),
+   linear-gradient(88deg,transparent 48%,rgba(255,238,205,.05) 50%,transparent 52.5%),
+   linear-gradient(102deg,transparent 44%,rgba(255,238,205,.042) 46%,transparent 48.5%);
   animation:rays2 13s ease-in-out infinite alternate}
-@keyframes rays2{0%{opacity:.26;transform:translateX(-52.5%) rotate(-1.6deg)}100%{opacity:.6;transform:translateX(-47.5%) rotate(1.6deg)}}
+@keyframes rays2{0%{opacity:.14;transform:translateX(-52.5%) rotate(-1.6deg)}100%{opacity:.30;transform:translateX(-47.5%) rotate(1.6deg)}}
 /* slow-falling rose petals */
 .hero-petal{position:absolute;pointer-events:none;
   background:linear-gradient(135deg,rgba(255,208,212,.9),rgba(228,158,168,.6));
