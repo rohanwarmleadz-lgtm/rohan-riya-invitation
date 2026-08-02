@@ -17,6 +17,7 @@
 <link rel="preload" as="image" href="envelope.jpg">
 <link rel="preload" as="image" href="hero.jpg?v=3">
 <link rel="preload" as="image" href="couple.jpg?v=3">
+<link rel="preload" as="audio" href="music.m4a?v=20260802-114026" type="audio/mp4">
 <style>
 :root{
   /* luxury palette */
@@ -41,7 +42,7 @@
   --foil:linear-gradient(135deg,#9a7430 0%,#e7cf94 22%,#c19a4e 42%,#f5e7bb 58%,#a67e37 78%,#e7cf94 100%);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;overflow-x:hidden}
 body{
   font-family:'Cormorant Garamond',serif;
   background:var(--ivory);
@@ -287,7 +288,7 @@ body::after{
 #scratchSec{background:linear-gradient(180deg,#f8f1e8 0%,#f4e6dd 100%)}
 
 /* ================= SCRATCH ================= */
-#scratchWrap{position:relative;width:min(84vw,344px);height:304px;margin:26px auto 0}
+#scratchWrap{position:relative;width:min(100%,344px);height:304px;margin:26px auto 0}
 #scratchUnder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px}
 .heart-frame{position:relative;width:256px;height:230px;display:flex;align-items:center;justify-content:center}
 .heart-frame svg{position:absolute;inset:0;width:100%;height:100%}
@@ -302,7 +303,7 @@ body::after{
 @keyframes fall{0%{transform:translateY(-10px) rotate(0);opacity:0}12%{opacity:.85}100%{transform:translateY(320px) rotate(300deg);opacity:0}}
 
 /* ================= COUNTDOWN ================= */
-#countPhoto{position:relative;width:min(74vw,330px);aspect-ratio:.8;margin:0 auto 46px;border-radius:10px;overflow:hidden;
+#countPhoto{position:relative;width:min(88%,330px);aspect-ratio:.8;margin:0 auto 46px;border-radius:10px;overflow:hidden;
   background:#fcf3e9; /* matches the artwork's own paper tone — no seam while it loads */
   box-shadow:0 20px 46px rgba(120,60,60,.26),0 0 0 1px rgba(193,154,78,.45),0 0 0 7px rgba(255,255,255,.6)}
 #countPhoto svg{width:100%;height:100%;display:block}
@@ -401,21 +402,21 @@ footer .f-sub{font-family:'Jost',sans-serif;font-size:.66rem;letter-spacing:.24e
 body.opened .pill{display:flex}
 #langPill{left:15px;bottom:calc(17px + env(safe-area-inset-bottom,0px))}
 #soundPill{right:15px;top:calc(17px + env(safe-area-inset-top,0px));padding:10px 12px;line-height:0}
-.note{width:18px;height:18px;display:block;overflow:visible}
-.note .note-beam,.note .note-head{fill:var(--gold-deep);stroke:none}
-.note .note-stem{fill:none;stroke:var(--gold-deep);stroke-width:1.5;stroke-linecap:round}
-.note .note-g{transform-origin:12px 12px;transition:opacity .3s ease}
+.mnote{width:18px;height:18px;display:block;overflow:visible}
+.mnote .note-beam,.mnote .note-head{fill:var(--gold-deep);stroke:none}
+.mnote .note-stem{fill:none;stroke:var(--gold-deep);stroke-width:1.5;stroke-linecap:round}
+.mnote .note-g{transform-origin:12px 12px;transition:opacity .3s ease}
 /* muted (default): note dimmed, fine slash across it */
-.note .note-g{opacity:.42}
-.note .note-slash{fill:none;stroke:var(--gold-deep);stroke-width:1.5;stroke-linecap:round;opacity:.9;
+.mnote .note-g{opacity:.42}
+.mnote .note-slash{fill:none;stroke:var(--gold-deep);stroke-width:1.5;stroke-linecap:round;opacity:.9;
   stroke-dasharray:22;stroke-dashoffset:0;transition:stroke-dashoffset .35s ease,opacity .3s ease}
 /* playing: slash draws away, note brightens and sways gently */
-#soundPill.on .note .note-g{opacity:1;animation:noteSway 2.6s ease-in-out infinite}
-#soundPill.on .note .note-slash{stroke-dashoffset:22;opacity:0}
+#soundPill.on .mnote .note-g{opacity:1;animation:noteSway 2.6s ease-in-out infinite}
+#soundPill.on .mnote .note-slash{stroke-dashoffset:22;opacity:0}
 @keyframes noteSway{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(3deg) translateY(-1px)}}
 
 /* ================= finger-reactive magic ================= */
-#fxLayer{position:fixed;inset:0;z-index:55;pointer-events:none;overflow:hidden}
+#fxLayer{position:fixed;top:0;left:0;width:100%;height:100%;z-index:55;pointer-events:none;overflow:hidden}
 .fx-spark{position:absolute;border-radius:50%;
   background:radial-gradient(circle,rgba(255,248,224,.95),rgba(255,214,150,.55) 55%,transparent 72%);
   will-change:transform,opacity;animation:fxSpark .95s ease-out forwards}
@@ -428,7 +429,7 @@ body.opened .pill{display:flex}
   100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--rot)) scale(1)}}
 
 /* ================= flower shower (pushpavarsha) ================= */
-.fs-stage{position:relative;width:min(90vw,400px);aspect-ratio:.94;margin:26px auto 0;border-radius:20px;overflow:hidden;
+.fs-stage{position:relative;width:min(100%,400px);aspect-ratio:.94;margin:26px auto 0;border-radius:20px;overflow:hidden;
   cursor:pointer;user-select:none;-webkit-user-select:none;
   background:radial-gradient(ellipse at 50% 34%,#fff8ef 0%,#f9ebdc 55%,#f2ddcd 100%);
   box-shadow:0 18px 42px rgba(140,90,80,.18),inset 0 1px 0 rgba(255,255,255,.8),0 0 0 1px rgba(193,154,78,.34)}
@@ -524,7 +525,7 @@ body.opened #scrollProgress{opacity:1}
 .families{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.08rem;color:var(--ink-soft);margin-top:26px}
 
 /* ================= persistent ambient particles ================= */
-#ambientFx{position:fixed;inset:0;z-index:6;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 1.4s ease}
+#ambientFx{position:fixed;top:0;left:0;width:100%;height:100%;z-index:6;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 1.4s ease}
 body.opened #ambientFx{opacity:1}
 .amb-petal{position:absolute;background:linear-gradient(135deg,rgba(255,208,214,.7),rgba(226,158,168,.4));
   border-radius:60% 40% 62% 38%/48% 62% 38% 52%;opacity:0;animation:ambFall linear infinite}
@@ -746,7 +747,7 @@ body.opened #ambientFx{opacity:1}
 
 <button class="pill" id="langPill">🌐 <span id="langLabel">हिन्दी</span></button>
 <button class="pill" id="soundPill" aria-label="Play music" aria-pressed="false">
-  <svg class="note" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <svg class="mnote" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <g class="note-g">
       <path class="note-beam" d="M9.6 7.4c3.4-1 6-1.7 8.1-2.2v2.9c-2.1.5-4.7 1.2-8.1 2.2z"/>
       <path class="note-stem" d="M9.6 7.4v8.9M17.7 5.2v8.5"/>
@@ -1010,22 +1011,28 @@ tick();setInterval(tick,1000);
 document.getElementById('msgForm').addEventListener('submit',e=>{e.preventDefault();
   document.getElementById('msgForm').style.display='none';document.getElementById('msgThanks').style.display='block';});
 
-/* music — plays the couple's song (music.mp3, pre-trimmed to its main part) when present;
-   falls back to the soft ambient pad only if the track cannot load */
+/* music — uses the exact audio stream extracted from the shared video first,
+   with mp3 as a backup and the soft ambient pad only as a last fallback */
 const Music=(function(){
   /* Signal chain:  voices -> filter -> master(tremolo) -> out(MUTE) -> speakers
      The tremolo LFO modulates `master` ONLY. `out` is never modulated, so
      ramping it to 0 is guaranteed silence — this is what makes mute reliable. */
-  const TRACK='music.mp3', VOL_TRACK=0.55, VOL_PAD=0.075;
-  let audio=null, useTrack=false, fadeTimer=null;
+  const TRACKS=['music.m4a?v=20260802-114026','music.mp3?v=20260802-114026'], VOL_TRACK=0.55, VOL_PAD=0.075;
+  let audio=null, useTrack=true, fadeTimer=null, trackIndex=0;
   let ctx=null, master=null, out=null, filt=null, voices=[], chordTimer=null, built=false;
   let playing=false, userMuted=false;          /* single source of truth */
 
-  /* optional external track; falls back to the built-in pad if absent */
-  (function probe(){ const a=new Audio(); a.preload='auto'; a.loop=true; a.volume=0;
-    a.addEventListener('canplaythrough',function(){ audio=a; useTrack=true; },{once:true});
-    a.addEventListener('error',function(){ useTrack=false; audio=null; },{once:true});
-    a.src=TRACK; })();
+  function loadTrack(i){
+    trackIndex=i; useTrack=true;
+    const a=new Audio(TRACKS[i]); a.preload='auto'; a.loop=true; a.volume=0; a.muted=false; audio=a;
+    a.addEventListener('play',function(){ if(audio===a) setSoundPill(true); });
+    a.addEventListener('pause',function(){ if(audio===a&&playing&&!userMuted) setSoundPill(false); });
+    a.addEventListener('error',function(){ if(audio!==a) return;
+      if(trackIndex<TRACKS.length-1) loadTrack(trackIndex+1);
+      else { useTrack=false; audio=null; } },{once:true});
+    a.load();
+  }
+  loadTrack(0);
 
   function build(){
     if(built) return; built=true;
@@ -1053,10 +1060,21 @@ const Music=(function(){
     fadeTimer=setInterval(function(){ i++;
       audio.volume=Math.max(0,Math.min(1,from+(v-from)*(i/steps)));
       if(i>=steps){ clearInterval(fadeTimer); if(v===0&&audio) audio.pause(); } },50); }
+  function playTrack(fast){
+    if(!audio) return false;
+    const ms=fast?700:2200;
+    setSoundPill(true);
+    audio.play().then(function(){ trackTo(VOL_TRACK,ms); })
+      .catch(function(){
+        if(trackIndex<TRACKS.length-1){ loadTrack(trackIndex+1); playTrack(fast); return; }
+        useTrack=false; audio=null; build(); ctx.resume(); padTo(VOL_PAD, fast?.7:2.4);
+      });
+    return true;
+  }
 
   function on(fast){
     playing=true;
-    if(useTrack&&audio){ audio.play().catch(function(){}); trackTo(VOL_TRACK, fast?700:2200); }
+    if(useTrack&&audio) playTrack(fast);
     else { build(); ctx.resume(); padTo(VOL_PAD, fast?.7:2.4); }
     setSoundPill(true);
   }
@@ -1083,8 +1101,8 @@ function startMusicIfOn(){Music.start();}
 function swellMusic(){Music.swell();}
 /* autoplay policy: begin on the first user gesture */
 (function(){function go(e){ if(e.target&&e.target.closest&&e.target.closest('#soundPill')) return;
-  Music.start();['pointerdown','touchstart','keydown','scroll'].forEach(ev=>window.removeEventListener(ev,go));}
-  ['pointerdown','touchstart','keydown','scroll'].forEach(ev=>window.addEventListener(ev,go,{passive:true}));})();
+  Music.start();['pointerdown','touchstart','keydown'].forEach(ev=>window.removeEventListener(ev,go));}
+  ['pointerdown','touchstart','keydown'].forEach(ev=>window.addEventListener(ev,go,{passive:true}));})();
 function setSoundPill(on){const pill=document.getElementById('soundPill'); if(!pill) return;
   pill.classList.toggle('on',!!on);
   pill.setAttribute('aria-label',on?'Mute music':'Play music');
