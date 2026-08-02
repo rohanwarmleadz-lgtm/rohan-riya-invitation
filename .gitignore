@@ -1,2 +1,5 @@
 _archive/
 .DS_Store
+music.mp3
+*.png
+!hero.jpg

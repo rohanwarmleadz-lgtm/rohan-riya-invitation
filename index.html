@@ -1013,66 +1013,70 @@ document.getElementById('msgForm').addEventListener('submit',e=>{e.preventDefaul
 /* music — plays the couple's song (music.mp3, pre-trimmed to its main part) when present;
    falls back to the soft ambient pad only if the track cannot load */
 const Music=(function(){
-  const TRACK='music.mp3', TRACK_VOL=0.6;
-  let audio=null, useTrack=true, trackFailed=false, fadeTimer=null;
-  (function initTrack(){ const a=new Audio(TRACK); a.preload='auto'; a.loop=true; a.volume=0; a.muted=false; audio=a;
-    a.addEventListener('error',()=>{ trackFailed=true; useTrack=false; },{once:true});
-    a.addEventListener('play',()=>setSoundPill(true));
-    a.addEventListener('pause',()=>{ if(!muted) setSoundPill(false); });
-    a.load(); })();
-  function fadeTo(target,ms){ if(!audio) return; clearInterval(fadeTimer);
-    const step=(target-audio.volume)/(ms/60);
-    fadeTimer=setInterval(()=>{ const v=audio.volume+step;
-      if((step>0&&v>=target)||(step<0&&v<=target)){ audio.volume=target; clearInterval(fadeTimer); if(target===0) audio.pause(); }
-      else audio.volume=Math.max(0,Math.min(1,v)); },60); }
-  let ctx=null,master=null,filt=null,voices=[],chordTimer=null,started=false,muted=false,ci=0;
-  const CHORDS=[
-    [146.83,220.00,293.66,440.00], // D
-    [123.47,246.94,293.66,369.99], // Bm
-    [98.00,196.00,293.66,392.00],  // G
-    [110.00,220.00,277.18,329.63]  // A
-  ];
-  const TARGET=0.075;
+  /* Signal chain:  voices -> filter -> master(tremolo) -> out(MUTE) -> speakers
+     The tremolo LFO modulates `master` ONLY. `out` is never modulated, so
+     ramping it to 0 is guaranteed silence — this is what makes mute reliable. */
+  const TRACK='music.mp3', VOL_TRACK=0.55, VOL_PAD=0.075;
+  let audio=null, useTrack=false, fadeTimer=null;
+  let ctx=null, master=null, out=null, filt=null, voices=[], chordTimer=null, built=false;
+  let playing=false, userMuted=false;          /* single source of truth */
+
+  /* optional external track; falls back to the built-in pad if absent */
+  (function probe(){ const a=new Audio(); a.preload='auto'; a.loop=true; a.volume=0;
+    a.addEventListener('canplaythrough',function(){ audio=a; useTrack=true; },{once:true});
+    a.addEventListener('error',function(){ useTrack=false; audio=null; },{once:true});
+    a.src=TRACK; })();
+
   function build(){
-    ctx=new(window.AudioContext||window.webkitAudioContext)();
-    master=ctx.createGain();master.gain.value=0;
-    filt=ctx.createBiquadFilter();filt.type='lowpass';filt.frequency.value=1150;filt.Q.value=.4;
-    const lfo=ctx.createOscillator(),lg=ctx.createGain();lfo.frequency.value=.08;lg.gain.value=.014;
-    lfo.connect(lg).connect(master.gain);lfo.start();
-    filt.connect(master).connect(ctx.destination);
-    for(let i=0;i<4;i++){const o=ctx.createOscillator(),g=ctx.createGain();
-      o.type=i<2?'sine':'triangle';o.frequency.value=CHORDS[0][i];g.gain.value=(i===0?.5:.3);
-      o.connect(g).connect(filt);o.start();voices.push(o);}
-    setChord(0);chordTimer=setInterval(()=>{ci=(ci+1)%CHORDS.length;setChord(ci);},5400);
+    if(built) return; built=true;
+    ctx=new (window.AudioContext||window.webkitAudioContext)();
+    out=ctx.createGain();    out.gain.value=0;      /* mute/volume — nothing modulates this */
+    master=ctx.createGain(); master.gain.value=1;   /* tremolo target */
+    filt=ctx.createBiquadFilter(); filt.type='lowpass'; filt.frequency.value=1150; filt.Q.value=.4;
+    const lfo=ctx.createOscillator(), lg=ctx.createGain();
+    lfo.frequency.value=.08; lg.gain.value=.06; lfo.connect(lg).connect(master.gain); lfo.start();
+    filt.connect(master); master.connect(out); out.connect(ctx.destination);
+    const CH=[[146.83,220,293.66,440],[123.47,246.94,293.66,369.99],
+              [98,196,293.66,392],[110,220,277.18,329.63]];
+    for(let i=0;i<4;i++){ const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type=i<2?'sine':'triangle'; o.frequency.value=CH[0][i]; g.gain.value=(i===0?.5:.3);
+      o.connect(g).connect(filt); o.start(); voices.push(o); }
+    let ci=0; chordTimer=setInterval(function(){ ci=(ci+1)%CH.length; const t=ctx.currentTime;
+      CH[ci].forEach(function(f,i){ voices[i].frequency.setTargetAtTime(f,t,.6); }); },5400);
   }
-  function setChord(k){const t=ctx.currentTime;CHORDS[k].forEach((f,i)=>voices[i].frequency.setTargetAtTime(f,t,.6));}
-  function ramp(to,sec){const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(Math.max(.0001,master.gain.value),t);master.gain.linearRampToValueAtTime(to,t+sec);}
-  function startPad(sec){ if(!ctx)build();ctx.resume();started=true;if(!muted)ramp(TARGET,sec); }
-  function startTrack(ms){
-    if(!audio) return false;
+  function padTo(v,sec){ if(!ctx) return; const t=ctx.currentTime;
+    out.gain.cancelScheduledValues(t);
+    out.gain.setValueAtTime(out.gain.value,t);
+    out.gain.linearRampToValueAtTime(v,t+sec); }
+  function trackTo(v,ms){ if(!audio) return; clearInterval(fadeTimer);
+    const from=audio.volume, steps=Math.max(1,Math.round(ms/50)); let i=0;
+    fadeTimer=setInterval(function(){ i++;
+      audio.volume=Math.max(0,Math.min(1,from+(v-from)*(i/steps)));
+      if(i>=steps){ clearInterval(fadeTimer); if(v===0&&audio) audio.pause(); } },50); }
+
+  function on(fast){
+    playing=true;
+    if(useTrack&&audio){ audio.play().catch(function(){}); trackTo(VOL_TRACK, fast?700:2200); }
+    else { build(); ctx.resume(); padTo(VOL_PAD, fast?.7:2.4); }
     setSoundPill(true);
-    audio.play().then(()=>{ started=true; fadeTo(TRACK_VOL,ms); setSoundPill(true); })
-      .catch(()=>{ started=false; if(trackFailed){ useTrack=false; startPad(2.6); setSoundPill(true); } else setSoundPill(false); });
-    return true;
   }
-  function audible(){ return useTrack&&audio ? !audio.paused : !!(ctx&&master&&master.gain.value>.001); }
+  function off(){
+    playing=false;
+    if(audio) trackTo(0,400);      /* silence whichever source is live */
+    if(ctx)   padTo(0,.4);
+    setSoundPill(false);
+  }
   return {
-    start(){
-      if(muted) return false;
-      if(useTrack&&audio){ startTrack(2400); return true; }
-      startPad(2.6); setSoundPill(true); return true;},
-    swell(){
-      if(muted)return;
-      if(useTrack&&audio){ if(audio.paused){ startTrack(1200); return; }
-        fadeTo(Math.min(1,TRACK_VOL*1.3),1200); setTimeout(()=>{ if(!muted) fadeTo(TRACK_VOL,2600); },3200); return; }
-      if(!ctx)return;const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(Math.max(.0001,master.gain.value),t);
-      master.gain.linearRampToValueAtTime(TARGET*1.55,t+1.5);master.gain.linearRampToValueAtTime(TARGET,t+5);},
-    toggle(){
-      if(!muted && audible()){ muted=true; if(useTrack&&audio) fadeTo(0,500); else if(ctx)ramp(0,.6); setSoundPill(false); return false; }
-      muted=false;
-      if(useTrack&&audio){ startTrack(700); return true; }
-      startPad(.7); setSoundPill(true); return true;},
-    isOn(){ return !muted&&audible(); }
+    start(){ if(userMuted||playing) return; on(false); },
+    swell(){ if(!playing) return;
+      if(useTrack&&audio){ trackTo(Math.min(1,VOL_TRACK*1.3),1200);
+        setTimeout(function(){ if(playing) trackTo(VOL_TRACK,2600); },3200); return; }
+      if(!ctx) return; const t=ctx.currentTime;
+      out.gain.cancelScheduledValues(t); out.gain.setValueAtTime(out.gain.value,t);
+      out.gain.linearRampToValueAtTime(VOL_PAD*1.6,t+1.4);
+      out.gain.linearRampToValueAtTime(VOL_PAD,t+5); },
+    toggle(){ if(playing){ userMuted=true; off(); } else { userMuted=false; on(true); } return playing; },
+    isOn(){ return playing; }
   };
 })();
 function startMusicIfOn(){Music.start();}
