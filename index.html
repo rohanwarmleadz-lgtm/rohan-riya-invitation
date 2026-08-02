@@ -422,14 +422,27 @@ body.opened .pill{display:flex}
   box-shadow:0 18px 42px rgba(140,90,80,.18),inset 0 1px 0 rgba(255,255,255,.8),0 0 0 1px rgba(193,154,78,.34)}
 .fs-stage:focus-visible{outline:3px solid rgba(193,154,78,.75);outline-offset:3px}
 .fs-stage:active{box-shadow:0 12px 30px rgba(140,90,80,.2),inset 0 1px 0 rgba(255,255,255,.8),0 0 0 1px rgba(193,154,78,.5)}
+.fs-stage.holding{box-shadow:0 14px 38px rgba(140,90,80,.2),inset 0 1px 0 rgba(255,255,255,.8),0 0 0 1px rgba(193,154,78,.58),0 0 28px rgba(236,209,160,.34)}
+.fs-stage.blessed{animation:stageBless 1.7s cubic-bezier(.2,.7,.3,1)}
+@keyframes stageBless{0%{transform:scale(1)}42%{transform:scale(1.018)}100%{transform:scale(1)}}
+.fs-meter{position:absolute;left:24px;right:24px;top:20px;z-index:4;height:7px;border-radius:999px;overflow:hidden;
+  pointer-events:none;background:rgba(139,106,95,.13);box-shadow:inset 0 1px 2px rgba(112,31,43,.12),0 1px 0 rgba(255,255,255,.65)}
+.fs-meter span{display:block;width:0;height:100%;border-radius:inherit;transition:width .36s cubic-bezier(.2,.7,.3,1);
+  background:var(--foil);box-shadow:0 0 12px rgba(193,154,78,.45)}
+.fs-stage.blessed .fs-meter span{animation:meterShine 1.6s ease-in-out infinite}
+@keyframes meterShine{0%,100%{filter:saturate(1)}50%{filter:saturate(1.35) brightness(1.12)}}
 #fsCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:2}
 .fs-inner{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   pointer-events:none;text-align:center;padding:0 18px}
 .fs-names{font-family:'Pinyon Script',cursive;font-size:2.9rem;line-height:1.1;color:var(--wine);
-  text-shadow:0 2px 14px rgba(255,225,190,.7)}
+  text-shadow:0 2px 14px rgba(255,225,190,.7);transition:transform .6s cubic-bezier(.2,.7,.3,1),text-shadow .6s ease}
+.fs-stage.blessed .fs-names{transform:scale(1.045);text-shadow:0 2px 28px rgba(255,206,150,.98),0 0 44px rgba(255,186,120,.55)}
 .fs-hint{margin-top:14px;font-family:'Jost',sans-serif;font-size:.66rem;letter-spacing:.24em;text-transform:uppercase;
   color:var(--mocha);animation:pulse 2.2s ease-in-out infinite;transition:opacity .5s ease}
 .fs-hint.gone{opacity:0;animation:none}
+.fs-wish{max-height:0;opacity:0;overflow:hidden;margin-top:0;font-style:italic;font-size:1.05rem;color:var(--wine);
+  transform:translateY(8px);transition:opacity .65s ease,max-height .65s ease,margin-top .65s ease,transform .65s cubic-bezier(.2,.7,.3,1)}
+.fs-wish.show{max-height:64px;opacity:1;margin-top:12px;transform:none}
 .fs-count{position:absolute;left:0;right:0;bottom:14px;z-index:3;text-align:center;pointer-events:none;
   font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.02rem;color:var(--wine);
   opacity:0;transition:opacity .5s ease}
@@ -715,10 +728,14 @@ body.opened #ambientFx{opacity:1}
     <p class="info-text reveal" data-i18n="showerIntro">Tap and hold to rain petals over the couple — an old blessing, in your hands.</p>
 
     <div class="fs-stage reveal" id="fsStage" role="button" tabindex="0" aria-label="Tap and hold to shower flowers on the couple">
+      <div class="fs-meter" id="fsMeterWrap" role="progressbar" aria-valuemin="0" aria-valuemax="108" aria-valuenow="0" aria-label="Blessing progress">
+        <span id="fsMeter"></span>
+      </div>
       <canvas id="fsCanvas" aria-hidden="true"></canvas>
       <div class="fs-inner">
         <div class="fs-names">Rohan &amp; Riya</div>
         <div class="fs-hint" id="fsHint" data-i18n="showerHint">Tap to shower</div>
+        <div class="fs-wish" id="fsWish" data-i18n="showerWish">May their love bloom forever</div>
       </div>
       <div class="fs-count" id="fsCount" role="status"></div>
     </div>
@@ -809,6 +826,7 @@ const I18N = {
     ebShower:"A shower of blessings", showerTitle:"Shower Them With Flowers",
     showerIntro:"Tap and hold to rain petals over the couple — an old blessing, in your hands.",
     showerHint:"Tap to shower",
+    showerWish:"May their love bloom forever",
     ebWishes:"Send your love", msgHead:"Leave a Wish",
     msgTitle:"Your Message", msgPh:"Write your wishes...", msgBtn:"Send Message",
     msgThanks:"💌 Thank you! Your wishes mean the world to us.",
@@ -852,6 +870,7 @@ const I18N = {
     ebShower:"आशीर्वाद की वर्षा", showerTitle:"पुष्प वर्षा कीजिए",
     showerIntro:"दबाकर रखिए और जोड़े पर फूल बरसाइए — एक पुरानी परंपरा, आपके हाथों।",
     showerHint:"फूल बरसाने के लिए स्पर्श करें",
+    showerWish:"इनका प्रेम सदा खिलता रहे",
     ebWishes:"स्नेह भेजें", msgHead:"शुभकामना लिखें",
     msgTitle:"आपका संदेश", msgPh:"अपनी शुभकामनाएँ लिखें...", msgBtn:"संदेश भेजें",
     msgThanks:"💌 धन्यवाद! आपकी शुभकामनाएँ हमारे लिए अनमोल हैं।",
@@ -1149,7 +1168,8 @@ function swellMusic(){Music.swell();}
   const stage=document.getElementById('fsStage'); if(!stage) return;
   const cv=document.getElementById('fsCanvas'), ctx=cv.getContext('2d');
   const hint=document.getElementById('fsHint'), countEl=document.getElementById('fsCount'),
-        names=document.querySelector('.fs-names');
+        meter=document.getElementById('fsMeter'), meterWrap=document.getElementById('fsMeterWrap'),
+        wish=document.getElementById('fsWish'), names=document.querySelector('.fs-names');
   const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- palettes ---------- */
@@ -1217,12 +1237,47 @@ function swellMusic(){Music.swell();}
 
   /* ---------- state ---------- */
   const MAX=reduce?70:260;
-  let W=0,H=0,dpr=1,parts=[],rest=[],sparks=[],ripples=[];
-  let raf=0,total=0,holdTimer=0,tone=null,praised=false,wind=0,gust=0,t=0;
+  const GOAL=108;
+  let W=0,H=0,dpr=1,parts=[],rest=[],sparks=[],ripples=[],heart=[];
+  let raf=0,total=0,holdTimer=0,tone=null,finale=false,wind=0,gust=0,t=0;
 
   function size(){ const r=cv.getBoundingClientRect(); dpr=Math.min(devicePixelRatio||1,2);
     W=r.width; H=r.height; cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
     ctx.setTransform(dpr,0,0,dpr,0,0); }
+  function updateBlessing(){
+    const offered=Math.min(total,GOAL), pct=Math.min(100,(offered/GOAL)*100);
+    if(meter) meter.style.width=pct+'%';
+    if(meterWrap) meterWrap.setAttribute('aria-valuenow',offered);
+    const hi=(typeof lang!=='undefined'&&lang==='hi');
+    countEl.textContent = total>=GOAL
+      ? (hi ? '108 आशीर्वाद पूर्ण 🌸' : '108 blessings complete 🌸')
+      : (hi ? (offered+' / 108 पुष्प अर्पित') : (offered+' / 108 blessings offered'));
+    if(total>=GOAL && !finale) completeBlessing();
+  }
+  function makeHeart(){
+    heart=[];
+    const n=reduce?22:48, sc=Math.min(W,H)*.0115, cx=W/2, cy=H*.48;
+    for(let i=0;i<n;i++){
+      const a=(i/n)*Math.PI*2, x=16*Math.pow(Math.sin(a),3),
+            y=-(13*Math.cos(a)-5*Math.cos(2*a)-2*Math.cos(3*a)-Math.cos(4*a));
+      heart.push({
+        sp:sprites[(i*3)%PETAL_START], far:false,
+        sx:cx+(Math.random()-.5)*W*.95, sy:-24-Math.random()*H*.22,
+        tx:cx+x*sc, ty:cy+y*sc*.88,
+        s:.27+Math.random()*.18, rot:Math.random()*6.28, vr:(Math.random()-.5)*.018,
+        life:-i*1.5
+      });
+    }
+  }
+  function completeBlessing(){
+    finale=true; stage.classList.add('blessed'); hint.classList.add('gone');
+    if(wish) wish.classList.add('show');
+    makeHeart(); goldDust(reduce?14:36);
+    for(let i=0;i<4;i++) setTimeout(chime,i*115);
+    if(navigator.vibrate) navigator.vibrate([18,34,18]);
+    setTimeout(()=>{ const hi=(typeof lang!=='undefined'&&lang==='hi');
+      countEl.textContent = hi ? 'आपका आशीर्वाद इन पर बरसे 🌸' : 'Your blessings rain over them 🌸'; },900);
+  }
 
   function spawn(n){
     for(let i=0;i<n && parts.length<MAX;i++){
@@ -1243,11 +1298,7 @@ function swellMusic(){Music.swell();}
         life:0
       });
     }
-    total+=n; countEl.classList.add('show');
-    const hi=(typeof lang!=='undefined'&&lang==='hi');
-    countEl.textContent = hi ? (total+' पुष्प अर्पित 🌸') : (total+' flowers showered 🌸');
-    if(total>=120 && !praised){ praised=true; setTimeout(()=>{ const h2=(typeof lang!=='undefined'&&lang==='hi');
-      countEl.textContent = h2 ? 'आपका आशीर्वाद इन पर बरसे 🌸' : 'Your blessings rain over them 🌸'; },800); }
+    total+=n; countEl.classList.add('show'); updateBlessing();
     if(!raf) raf=requestAnimationFrame(tick);
   }
   function goldDust(n){ for(let i=0;i<n;i++) sparks.push({
@@ -1301,6 +1352,18 @@ function swellMusic(){Music.swell();}
       draw(p);
     }
 
+    /* finale garland — flowers gather into a heart around the couple's names */
+    for(let i=heart.length-1;i>=0;i--){ const h=heart[i]; h.life++;
+      if(h.life<0) continue;
+      const u=Math.min(1,h.life/62), ease=1-Math.pow(1-u,3),
+            fade=h.life>420?Math.max(0,1-(h.life-420)/90):1;
+      if(fade<=0){ heart.splice(i,1); continue; }
+      const x=h.sx+(h.tx-h.sx)*ease+Math.sin(t*.05+i)*1.8,
+            y=h.sy+(h.ty-h.sy)*ease+Math.cos(t*.045+i)*1.4;
+      h.rot+=h.vr;
+      ctx.save(); ctx.translate(x,y); ctx.rotate(h.rot); ctx.scale(h.s,h.s);
+      ctx.globalAlpha=Math.min(1,u*2)*fade; ctx.drawImage(h.sp.near,-SP/2,-SP/2); ctx.restore(); }
+
     /* tap ripples */
     for(let i=ripples.length-1;i>=0;i--){ const r=ripples[i]; r.r+=3.4; r.a-=.022;
       if(r.a<=0){ ripples.splice(i,1); continue; }
@@ -1309,7 +1372,7 @@ function swellMusic(){Music.swell();}
       g.addColorStop(0,'rgba(255,236,196,0)'); g.addColorStop(.7,'rgba(255,228,180,.30)'); g.addColorStop(1,'rgba(255,214,150,0)');
       ctx.fillStyle=g; ctx.beginPath(); ctx.arc(r.x,r.y,r.r,0,7); ctx.fill(); ctx.restore(); }
 
-    raf = (parts.length||sparks.length||rest.length||ripples.length) ? requestAnimationFrame(tick) : 0;
+    raf = (parts.length||sparks.length||rest.length||ripples.length||heart.length) ? requestAnimationFrame(tick) : 0;
   }
 
   function chime(){ try{ tone=tone||new (window.AudioContext||window.webkitAudioContext)(); const c=tone; c.resume();
@@ -1328,9 +1391,9 @@ function swellMusic(){Music.swell();}
     if(navigator.vibrate) navigator.vibrate(12);
     if(!raf) raf=requestAnimationFrame(tick);
   }
-  function startHold(e){ e.preventDefault(); burst(e);
+  function startHold(e){ e.preventDefault(); stage.classList.add('holding'); burst(e);
     clearInterval(holdTimer); holdTimer=setInterval(()=>{ spawn(reduce?3:8); goldDust(reduce?1:3); }, 165); }
-  function endHold(){ clearInterval(holdTimer); holdTimer=0; }
+  function endHold(){ stage.classList.remove('holding'); clearInterval(holdTimer); holdTimer=0; }
 
   ['pointerdown','touchstart'].forEach(ev=>stage.addEventListener(ev,startHold,{passive:false}));
   ['pointerup','pointerleave','pointercancel','touchend'].forEach(ev=>stage.addEventListener(ev,endHold));
