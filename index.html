@@ -1053,14 +1053,13 @@ document.getElementById('msgForm').addEventListener('submit',e=>{e.preventDefaul
   document.getElementById('msgForm').style.display='none';document.getElementById('msgThanks').style.display='block';});
 
 /* music — plays the couple's song (music.mp3, pre-trimmed to its main part) when present;
-   falls back to the soft ambient pad if the track is missing */
+   falls back to the soft ambient pad only if the track cannot load */
 const Music=(function(){
   const TRACK='music.mp3', TRACK_VOL=0.6;
-  let audio=null, useTrack=false, fadeTimer=null;
-  (function probe(){ const a=new Audio(); a.preload='auto'; a.loop=true; a.volume=0;
-    a.addEventListener('canplaythrough',()=>{ audio=a; useTrack=true; },{once:true});
-    a.addEventListener('error',()=>{ useTrack=false; },{once:true});
-    a.src=TRACK; })();
+  let audio=null, useTrack=true, trackFailed=false, fadeTimer=null;
+  (function initTrack(){ const a=new Audio(TRACK); a.preload='auto'; a.loop=true; a.volume=0; audio=a;
+    a.addEventListener('error',()=>{ trackFailed=true; useTrack=false; },{once:true});
+    a.load(); })();
   function fadeTo(target,ms){ if(!audio) return; clearInterval(fadeTimer);
     const step=(target-audio.volume)/(ms/60);
     fadeTimer=setInterval(()=>{ const v=audio.volume+step;
@@ -1091,7 +1090,7 @@ const Music=(function(){
   return {
     start(){
       if(started)return;started=true;
-      if(useTrack&&audio){ if(!muted){ audio.play().catch(()=>{}); fadeTo(TRACK_VOL,2400); } return; }
+      if(useTrack&&audio){ if(!muted){ audio.play().then(()=>fadeTo(TRACK_VOL,2400)).catch(()=>{ if(trackFailed){ if(!ctx)build();ctx.resume();ramp(TARGET,2.6); } }); } return; }
       if(!ctx)build();ctx.resume();if(!muted)ramp(TARGET,2.6);},
     swell(){
       if(muted)return;
