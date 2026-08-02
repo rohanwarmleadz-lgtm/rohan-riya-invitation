@@ -909,8 +909,23 @@ let started=false;
    envelope gets the full pipe on first paint and the hero is still ready long before
    the 3.1s open animation needs it. Tap and a timeout are both safety nets. */
 function heroOn(){ document.documentElement.classList.add('heroon'); }
-(function(){ var im=new Image(); im.onload=im.onerror=heroOn; im.src='envelope.webp';
-  setTimeout(heroOn,2600); })();
+(function(){
+  /* Watch for the envelope finishing via resource timing rather than requesting it
+     again. The old version did `new Image().src='envelope.webp'`, which pulled a
+     whole second copy of the envelope in a different format once the CSS moved to
+     AVIF — 592 KB of pure waste on the critical path. This costs zero bytes and
+     works whichever format the browser actually chose. */
+  var done=false;
+  function fire(){ if(done) return; done=true; heroOn(); }
+  try{
+    var po=new PerformanceObserver(function(list){
+      var es=list.getEntries();
+      for(var i=0;i<es.length;i++) if(/envelope\./.test(es[i].name)){ fire(); po.disconnect(); return; }
+    });
+    po.observe({type:'resource', buffered:true});
+  }catch(e){}
+  setTimeout(fire,2600);   /* safety net if the observer is unavailable */
+})();
 
 function startOpen(){
   if(started) return; started=true;
