@@ -173,9 +173,12 @@ body::after{
 /* pointer / tilt parallax wrapper (subtle depth) */
 .hero-parallax{position:absolute;inset:0;will-change:transform;transition:transform .4s cubic-bezier(.2,.7,.3,1)}
 /* living cover: slow cinematic camera drift over the artwork (Ken Burns) */
-.hero-img{position:absolute;inset:-2.5%;background:url("hero.jpg?v=3") center center / cover no-repeat;
-  background-image:image-set(url("hero.webp") type("image/webp"),url("hero.jpg?v=3") type("image/jpeg"));
+.hero-img{position:absolute;inset:-2.5%;background:#0f1a2c center center / cover no-repeat;
   will-change:transform;animation:heroKen 26s ease-in-out infinite alternate;backface-visibility:hidden}
+/* hero is behind the closed envelope, so it must not race it for bandwidth.
+   .heroon is set the moment the envelope image has landed (or on tap, whichever is first). */
+html.heroon .hero-img{background-image:url("hero.jpg?v=3");
+  background-image:image-set(url("hero.webp") type("image/webp"),url("hero.jpg?v=3") type("image/jpeg"))}
 #hero.play .hero-img{animation:heroReveal 4s cubic-bezier(.22,.62,.28,1),heroKen 26s ease-in-out 4s infinite alternate}
 /* cover emerges out of focus and resolves — one continuous camera move, no cut */
 @keyframes heroReveal{
@@ -884,8 +887,16 @@ function envGeom(){
 envGeom(); window.addEventListener('resize',envGeom);
 
 let started=false;
+/* release the hero image as soon as the envelope has finished downloading, so the
+   envelope gets the full pipe on first paint and the hero is still ready long before
+   the 3.1s open animation needs it. Tap and a timeout are both safety nets. */
+function heroOn(){ document.documentElement.classList.add('heroon'); }
+(function(){ var im=new Image(); im.onload=im.onerror=heroOn; im.src='envelope.webp';
+  setTimeout(heroOn,2600); })();
+
 function startOpen(){
   if(started) return; started=true;
+  heroOn();
   try{ Music.warm(); }catch(e){}   /* begin fetching the track now — ~3.1s before it is needed */
   window.scrollTo(0,0);
   env.classList.remove('armed');
