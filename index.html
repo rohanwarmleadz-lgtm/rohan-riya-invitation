@@ -933,11 +933,17 @@ if(liteFx) document.documentElement.classList.add('litefx');
    rather than pre-judging by screen size. */
 function heroPerfGuard(){
   if(liteFx) return;
-  var f=[], t0=performance.now();
-  (function rec(ts){ f.push(ts); if(performance.now()-t0<1400) requestAnimationFrame(rec); else check(); })(t0);
+  if(document.hidden) return;              /* backgrounded: rAF is throttled, not slow */
+  var f=[], t0=performance.now(), bailed=false;
+  function bail(){ bailed=true; }
+  document.addEventListener('visibilitychange',bail,{once:true});
+  (function rec(ts){ f.push(ts); if(!bailed && performance.now()-t0<1400) requestAnimationFrame(rec); else check(); })(t0);
   function check(){
-    if(f.length<20) return;
-    var g=[]; for(var i=1;i<f.length;i++) g.push(f[i]-f[i-1]);
+    document.removeEventListener('visibilitychange',bail);
+    if(bailed || document.hidden) return;   /* the guest switched away — judge nothing */
+    if(f.length<20) return;                 /* too few samples to be throttling-proof */
+    var g=[]; for(var i=1;i<f.length;i++){ var dt=f[i]-f[i-1]; if(dt<100) g.push(dt); }
+    if(g.length<20) return;                 /* frames >100ms are throttling, not jank */
     g.sort(function(a,b){return a-b;});
     if(g[Math.floor(g.length/2)]<=22) return;        /* holding ~45fps+, leave it alone */
     document.documentElement.classList.add('litefx');
