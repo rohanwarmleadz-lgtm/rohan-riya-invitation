@@ -76,7 +76,9 @@ body::after{
   opacity:.35;mix-blend-mode:soft-light;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-html.litefx body::after{display:none}
+html.litefx body::after,
+html.touch body::after{display:none}   /* fixed + soft-light over the full viewport is
+     re-blended every scroll frame; invisible on a phone, expensive to keep */
 
 /* ============ shared type & ornaments ============ */
 .foil{
@@ -454,8 +456,9 @@ footer .f-sub{font-family:'Jost',sans-serif;font-size:.66rem;letter-spacing:.24e
   background:rgba(250,242,236,.94);color:var(--wine);
   font-family:'Jost',sans-serif;font-size:.74rem;letter-spacing:.08em;
   border-radius:999px;padding:10px 17px;box-shadow:0 8px 20px rgba(90,40,45,.24),inset 0 0 0 1px rgba(193,154,78,.4);
-  display:none;align-items:center;gap:7px;backdrop-filter:blur(5px);
-}
+  display:none;align-items:center;gap:7px;
+}  /* no backdrop-filter: the background is 94% opaque so the blur was invisible,
+     but on a fixed element it forced a full re-blur on every scroll frame */
 html.litefx .scroll-invite,
 html.litefx .pill{-webkit-backdrop-filter:none;backdrop-filter:none}
 body.opened .pill{display:flex}
@@ -598,7 +601,8 @@ body.opened #scrollProgress{opacity:1}
 /* ================= persistent ambient particles ================= */
 #ambientFx{position:fixed;top:0;left:0;width:100%;height:100%;z-index:6;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 1.4s ease}
 body.opened #ambientFx{opacity:1}
-html.litefx #ambientFx{display:none}
+html.litefx #ambientFx,
+html.touch #ambientFx{display:none}   /* fixed full-screen particle layer — same reason */
 .amb-petal{position:absolute;background:linear-gradient(135deg,rgba(255,208,214,.7),rgba(226,158,168,.4));
   border-radius:60% 40% 62% 38%/48% 62% 38% 52%;opacity:0;animation:ambFall linear infinite}
 @keyframes ambFall{0%{transform:translate(0,-30px) rotate(0);opacity:0}10%{opacity:.55}90%{opacity:.4}100%{transform:translate(var(--ax,30px),104vh) rotate(300deg);opacity:0}}
@@ -930,6 +934,11 @@ const _cores=navigator.hardwareConcurrency||0;
 const liteFx=(_mem>0&&_mem<=2)||(_cores>0&&_cores<=2)||
   (window.matchMedia&&window.matchMedia('(max-width: 360px)').matches);
 if(liteFx) document.documentElement.classList.add('litefx');
+/* Separate from litefx on purpose: this gates only the FIXED, full-screen layers
+   that recomposite while scrolling. The hero's own richness stays on the
+   capability gate above, so phones keep all 98 particles. */
+if(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches)
+  document.documentElement.classList.add('touch');
 
 /* If the hero genuinely cannot hold a frame rate here, thin it out at runtime
    rather than pre-judging by screen size. */
