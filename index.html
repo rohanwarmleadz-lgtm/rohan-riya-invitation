@@ -383,7 +383,6 @@ body::after{
 /* ================= CLOSING ================= */
 #closing{padding:96px 28px 60px;background:linear-gradient(180deg,#f0ded6 0%,#ecd7ce 100%)}
 .closing-line{font-family:'Great Vibes',cursive;font-size:2.9rem;line-height:1.3;color:var(--wine);margin:24px 0 12px}
-.closing-names{font-family:'Pinyon Script',cursive;font-size:2.5rem;color:var(--ink)}
 .closing-orn{width:200px;height:26px;margin:0 auto;display:block;opacity:.85}
 
 footer{text-align:center;padding:40px 20px 52px;background:#ecd7ce;position:relative}
@@ -523,6 +522,16 @@ body.opened #scrollProgress{opacity:1}
 .share-btn:active{transform:translateY(1px)}
 .share-btn svg{width:16px;height:16px}
 .families{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.08rem;color:var(--ink-soft);margin-top:26px}
+.firms{margin-top:20px;padding-top:16px;position:relative}
+.firms::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:96px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.75}
+.firms-label{font-family:'Jost',sans-serif;font-size:.6rem;letter-spacing:.28em;text-indent:.28em;
+  text-transform:uppercase;color:var(--mocha);opacity:.85;margin-bottom:8px}
+.firm-row{display:flex;align-items:baseline;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:5px}
+.firm-name{font-family:'Cormorant Garamond',serif;font-size:1.04rem;color:var(--ink-soft)}
+.firm-side{font-family:'Jost',sans-serif;font-size:.56rem;letter-spacing:.18em;text-indent:.18em;
+  text-transform:uppercase;color:var(--wine);opacity:.75;
+  border:1px solid rgba(193,154,78,.45);border-radius:999px;padding:3px 9px;white-space:nowrap}
 
 /* ================= persistent ambient particles ================= */
 #ambientFx{position:fixed;top:0;left:0;width:100%;height:100%;z-index:6;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 1.4s ease}
@@ -725,7 +734,6 @@ body.opened #ambientFx{opacity:1}
       <circle cx="100" cy="12" r="2.4" fill="var(--gold)"/>
     </svg>
     <p class="closing-line" data-i18n="closingLine">We can't wait to<br>celebrate with you</p>
-    <p class="closing-names">Rohan &amp; Riya</p>
     <div class="share-row">
       <a class="share-btn" id="shareWa" href="#" target="_blank" rel="noopener" aria-label="Share on WhatsApp">
         <svg viewBox="0 0 24 24" fill="#25806f"><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.4A10 10 0 1 0 12 2zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.5.1.3.6 1 1.3 1.6.9.8 1.6 1 1.9 1.2.2.1.4.1.5-.1l.6-.7c.2-.2.3-.2.5-.1l1.7.8c.2.1.4.2.4.3.1.1.1.6-.1 1.1z"/></svg>
@@ -737,6 +745,11 @@ body.opened #ambientFx{opacity:1}
       </button>
     </div>
     <div class="families" data-i18n="families">With love, Garg &amp; Bansal families</div>
+    <div class="firms">
+      <div class="firms-label" data-i18n="firmsLabel">Firms</div>
+      <div class="firm-row"><span class="firm-name" data-i18n="firmGroomName">Shyam Petrol Pump, Raigarh</span><span class="firm-side" data-i18n="firmGroom">Groom</span></div>
+      <div class="firm-row"><span class="firm-name" data-i18n="firmBrideName">Bansal Metachem, Korba</span><span class="firm-side" data-i18n="firmBride">Bride</span></div>
+    </div>
   </section>
 
   <footer>
@@ -787,6 +800,8 @@ const I18N = {
     msgThanks:"💌 Thank you! Your wishes mean the world to us.",
     closingLine:"We can't wait to<br>celebrate with you",
     shareWa:"WhatsApp", shareCopy:"Copy link", copied:"Copied ✓", families:"With love, Garg &amp; Bansal families",
+    firmsLabel:"Firms", firmGroomName:"Shyam Petrol Pump, Raigarh", firmGroom:"Groom",
+    firmBrideName:"Bansal Metachem, Korba", firmBride:"Bride",
     footerSub:"13 · 08 · 2026 &nbsp;•&nbsp; Made with love",
     langLabel:"हिन्दी"
   },
@@ -816,6 +831,8 @@ const I18N = {
     msgThanks:"💌 धन्यवाद! आपकी शुभकामनाएँ हमारे लिए अनमोल हैं।",
     closingLine:"आपके साथ जश्न मनाने का<br>हमें बेसब्री से इंतज़ार है",
     shareWa:"व्हाट्सऐप", shareCopy:"लिंक कॉपी करें", copied:"कॉपी हो गया ✓", families:"सप्रेम, गर्ग एवं बंसल परिवार",
+    firmsLabel:"प्रतिष्ठान", firmGroomName:"श्याम पेट्रोल पंप, रायगढ़", firmGroom:"वर",
+    firmBrideName:"बंसल मेटाकेम, कोरबा", firmBride:"वधू",
     footerSub:"13 · 08 · 2026 &nbsp;•&nbsp; प्रेम सहित",
     langLabel:"English"
   }
